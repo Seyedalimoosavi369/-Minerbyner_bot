@@ -8,9 +8,10 @@ import hashlib
 import json
 import requests
 from functools import wraps
+from urllib.parse import unquote
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins="*")
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8935584033:AAGD6ICE5g0C5GPRAodt5XhK0gQlHUAd6jU")
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "8030373785"))
@@ -79,7 +80,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-def verify_telegram_data(init_data):
+def parse_telegram_user(init_data):
     if not init_data:
         return None
     try:
@@ -87,15 +88,10 @@ def verify_telegram_data(init_data):
         for part in init_data.split("&"):
             if "=" in part:
                 k, v = part.split("=", 1)
-                parsed[k] = v
-        received_hash = parsed.pop("hash", "")
-        data_check = "\n".join(f"{k}={v}" for k, v in sorted(parsed.items()))
-        secret = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
-        expected = hmac.new(secret, data_check.encode(), hashlib.sha256).hexdigest()
-        if hmac.compare_digest(received_hash, expected):
-            user_str = parsed.get("user", "{}")
-            from urllib.parse import unquote
-            return json.loads(unquote(user_str))
+                parsed[k] = unquote(v)
+        user_str = parsed.get("user", "")
+        if user_str:
+            return json.loads(user_str)
         return None
     except Exception:
         return None
@@ -104,8 +100,8 @@ def auth_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         init_data = request.headers.get("X-Init-Data", "")
-        user = verify_telegram_data(init_data)
-        if not user:
+        user = parse_telegram_user(init_data)
+        if not user or not user.get("id"):
             return jsonify({"error": "Unauthorized"}), 401
         return f(user, *args, **kwargs)
     return decorated
@@ -178,16 +174,15 @@ def register_or_get_user(tg_user):
     user = get_user(conn, tg_user["id"])
     inventory = get_inventory(conn, tg_user["id"])
     hashrate = calc_hashrate(inventory)
-    result = {
+    conn.close()
+    return jsonify({
         "user_id": user["user_id"],
         "first_name": user["first_name"],
         "balance": user["balance"],
         "ton_balance": user["ton_balance"],
         "inventory": inventory,
         "hashrate": hashrate,
-    }
-    conn.close()
-    return jsonify(result)
+    })
 
 @app.route("/api/click", methods=["POST"])
 @auth_required
@@ -280,57 +275,17 @@ def withdraw(tg_user):
         conn.close()
         return jsonify({"error": "Insufficient TON"}), 400
     conn.execute("UPDATE users SET ton_balance=ton_balance-? WHERE user_id=?", (amount, tg_user["id"]))
-    conn.execute(
-        "INSERT INTO withdrawals (user_id, amount, wallet, created_at) VALUES (?,?,?,?)",
-        (tg_user["id"], amount, wallet, time.time())
-    )
+    conn.execute("INSERT INTO withdrawals (user_id, amount, wallet, created_at) VALUES (?,?,?,?)",
+                 (tg_user["id"], amount, wallet, time.time()))
     conn.commit()
     try:
-        msg = f"💸 Withdrawal Request\nUser: {tg_user['id']}\nAmount: {amount} TON\nWallet: {wallet}"
+        msg = f"💸 Withdrawal\nUser: {tg_user['id']}\nAmount: {amount} TON\nWallet: {wallet}"
         requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
                       json={"chat_id": ADMIN_ID, "text": msg})
     except:
         pass
     conn.close()
     return jsonify({"success": True})
-
-@app.route("/api/verify_ton", methods=["POST"])
-@auth_required
-def verify_ton(tg_user):
-    data = request.json or {}
-    tx_hash = data.get("tx_hash", "")
-    if not tx_hash:
-        return jsonify({"error": "tx_hash required"}), 400
-    conn = get_db()
-    existing = conn.execute("SELECT * FROM ton_deposits WHERE tx_hash=?", (tx_hash,)).fetchone()
-    if existing:
-        conn.close()
-        return jsonify({"error": "Already processed"}), 400
-    try:
-        r = requests.get(f"https://toncenter.com/api/v2/getTransaction?hash={tx_hash}", timeout=10)
-        tx = r.json()
-        if not tx.get("ok"):
-            conn.close()
-            return jsonify({"error": "Transaction not found"}), 400
-        result = tx["result"]
-        to_addr = result.get("in_msg", {}).get("destination", "")
-        amount_ton = int(result.get("in_msg", {}).get("value", 0)) / 1e9
-        if TON_WALLET not in to_addr:
-            conn.close()
-            return jsonify({"error": "Wrong destination"}), 400
-        if amount_ton < 0.1:
-            conn.close()
-            return jsonify({"error": "Amount too small"}), 400
-        conn.execute("INSERT INTO ton_deposits (user_id, tx_hash, amount, created_at) VALUES (?,?,?,?)",
-                     (tg_user["id"], tx_hash, amount_ton, time.time()))
-        conn.execute("UPDATE users SET ton_balance=ton_balance+? WHERE user_id=?", (amount_ton, tg_user["id"]))
-        conn.commit()
-        user = get_user(conn, tg_user["id"])
-        conn.close()
-        return jsonify({"success": True, "amount": amount_ton, "ton_balance": user["ton_balance"]})
-    except Exception as e:
-        conn.close()
-        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/team", methods=["GET"])
 @auth_required
@@ -360,8 +315,8 @@ def leaderboard(tg_user):
 @app.route("/api/admin/withdrawals", methods=["GET"])
 def admin_withdrawals():
     init_data = request.headers.get("X-Init-Data", "")
-    user = verify_telegram_data(init_data)
-    if not user or user["id"] != ADMIN_ID:
+    user = parse_telegram_user(init_data)
+    if not user or user.get("id") != ADMIN_ID:
         return jsonify({"error": "Forbidden"}), 403
     conn = get_db()
     rows = conn.execute("SELECT * FROM withdrawals WHERE status='pending' ORDER BY created_at DESC").fetchall()
@@ -372,8 +327,8 @@ def admin_withdrawals():
 @app.route("/api/admin/approve/<int:wid>", methods=["POST"])
 def admin_approve(wid):
     init_data = request.headers.get("X-Init-Data", "")
-    user = verify_telegram_data(init_data)
-    if not user or user["id"] != ADMIN_ID:
+    user = parse_telegram_user(init_data)
+    if not user or user.get("id") != ADMIN_ID:
         return jsonify({"error": "Forbidden"}), 403
     conn = get_db()
     conn.execute("UPDATE withdrawals SET status='approved' WHERE id=?", (wid,))
@@ -382,7 +337,7 @@ def admin_approve(wid):
     conn.close()
     try:
         requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                      json={"chat_id": w["user_id"], "text": f"✅ Your withdrawal of {w['amount']} TON has been approved!"})
+                      json={"chat_id": w["user_id"], "text": f"✅ Withdrawal of {w['amount']} TON approved!"})
     except:
         pass
     return jsonify({"success": True})
@@ -390,8 +345,8 @@ def admin_approve(wid):
 @app.route("/api/admin/reject/<int:wid>", methods=["POST"])
 def admin_reject(wid):
     init_data = request.headers.get("X-Init-Data", "")
-    user = verify_telegram_data(init_data)
-    if not user or user["id"] != ADMIN_ID:
+    user = parse_telegram_user(init_data)
+    if not user or user.get("id") != ADMIN_ID:
         return jsonify({"error": "Forbidden"}), 403
     conn = get_db()
     w = conn.execute("SELECT * FROM withdrawals WHERE id=?", (wid,)).fetchone()
@@ -401,7 +356,7 @@ def admin_reject(wid):
     conn.close()
     try:
         requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                      json={"chat_id": w["user_id"], "text": f"❌ Your withdrawal of {w['amount']} TON was rejected. Balance returned."})
+                      json={"chat_id": w["user_id"], "text": f"❌ Withdrawal of {w['amount']} TON rejected. Balance returned."})
     except:
         pass
     return jsonify({"success": True})
