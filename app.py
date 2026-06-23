@@ -49,7 +49,7 @@ def init_db():
             username TEXT,
             first_name TEXT,
             balance REAL DEFAULT 1000000,
-            ton_balance REAL DEFAULT 0,
+            ton_balance REAL DEFAULT 5,
             referrer_id INTEGER DEFAULT NULL,
             last_mine_time REAL DEFAULT 0,
             created_at REAL DEFAULT 0
@@ -80,23 +80,27 @@ def init_db():
     conn.close()
 
 def verify_telegram_data(init_data):
+    if not init_data:
+        return None
     try:
         parsed = {}
         for part in init_data.split("&"):
-            k, v = part.split("=", 1)
-            parsed[k] = v
+            if "=" in part:
+                k, v = part.split("=", 1)
+                parsed[k] = v
         received_hash = parsed.pop("hash", "")
         data_check = "\n".join(f"{k}={v}" for k, v in sorted(parsed.items()))
         secret = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
         expected = hmac.new(secret, data_check.encode(), hashlib.sha256).hexdigest()
         if hmac.compare_digest(received_hash, expected):
-            return json.loads(parsed.get("user", "{}"))
+            user_str = parsed.get("user", "{}")
+            from urllib.parse import unquote
+            return json.loads(unquote(user_str))
         return None
     except Exception:
         return None
 
 def auth_required(f):
-    from functools import wraps
     @wraps(f)
     def decorated(*args, **kwargs):
         init_data = request.headers.get("X-Init-Data", "")
@@ -156,13 +160,18 @@ def register_or_get_user(tg_user):
     user = get_user(conn, tg_user["id"])
     if not user:
         conn.execute(
-            "INSERT INTO users (user_id, username, first_name, last_mine_time, created_at) VALUES (?,?,?,?,?)",
-            (tg_user["id"], tg_user.get("username", ""), tg_user.get("first_name", ""), time.time(), time.time())
+            "INSERT INTO users (user_id, username, first_name, balance, ton_balance, last_mine_time, created_at) VALUES (?,?,?,?,?,?,?)",
+            (tg_user["id"], tg_user.get("username", ""), tg_user.get("first_name", ""), 1000000, 5, time.time(), time.time())
         )
-        if referrer_id and int(referrer_id) != tg_user["id"]:
-            ref = get_user(conn, int(referrer_id))
-            if ref:
-                conn.execute("UPDATE users SET referrer_id=? WHERE user_id=?", (int(referrer_id), tg_user["id"]))
+        if referrer_id:
+            try:
+                rid = int(referrer_id)
+                if rid != tg_user["id"]:
+                    ref = get_user(conn, rid)
+                    if ref:
+                        conn.execute("UPDATE users SET referrer_id=? WHERE user_id=?", (rid, tg_user["id"]))
+            except:
+                pass
         conn.commit()
     apply_mine(conn, tg_user["id"])
     conn.commit()
@@ -280,7 +289,7 @@ def withdraw(tg_user):
         msg = f"💸 Withdrawal Request\nUser: {tg_user['id']}\nAmount: {amount} TON\nWallet: {wallet}"
         requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
                       json={"chat_id": ADMIN_ID, "text": msg})
-    except Exception:
+    except:
         pass
     conn.close()
     return jsonify({"success": True})
@@ -374,7 +383,7 @@ def admin_approve(wid):
     try:
         requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
                       json={"chat_id": w["user_id"], "text": f"✅ Your withdrawal of {w['amount']} TON has been approved!"})
-    except Exception:
+    except:
         pass
     return jsonify({"success": True})
 
@@ -393,7 +402,7 @@ def admin_reject(wid):
     try:
         requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
                       json={"chat_id": w["user_id"], "text": f"❌ Your withdrawal of {w['amount']} TON was rejected. Balance returned."})
-    except Exception:
+    except:
         pass
     return jsonify({"success": True})
 
