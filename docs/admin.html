@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MINER PRO - Admin</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #020617; color: #f1f5f9; font-family: sans-serif; padding: 16px; }
+.card { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+input { width: 100%; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px; color: white; font-size: 14px; margin-bottom: 8px; }
+button { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 8px; }
+.btn-green { background: #15803d; color: white; }
+.btn-red { background: #b91c1c; color: white; }
+.btn-blue { background: #1d4ed8; color: white; }
+h2 { color: #22d3ee; margin-bottom: 12px; }
+p { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+.msg { padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+.success { background: #14532d; color: #86efac; }
+.error { background: #7f1d1d; color: #fca5a5; }
+</style>
+</head>
+<body>
+<div id="root">
+<h1 style="color:#22d3ee;margin-bottom:20px;text-align:center">⚙️ Admin Panel</h1>
+<div id="msg"></div>
+
+<div class="card">
+  <h2>🎁 Send Reward</h2>
+  <input id="uid" type="number" placeholder="User ID (numeric)" />
+  <input id="trx" type="number" placeholder="TRX amount (e.g. 10000000)" />
+  <input id="ton" type="number" placeholder="TON amount (e.g. 10)" />
+  <button class="btn-green" onclick="sendReward()">Send Reward</button>
+</div>
+
+<div class="card">
+  <h2>💸 Pending Withdrawals</h2>
+  <button class="btn-blue" onclick="loadWithdrawals()">Load Withdrawals</button>
+  <div id="withdrawals"></div>
+</div>
+
+<div class="card">
+  <h2>📊 Stats</h2>
+  <button class="btn-blue" onclick="loadStats()">Load Stats</button>
+  <div id="stats"></div>
+</div>
+</div>
+
+<script>
+const API = "https://web-production-aa8bad.up.railway.app";
+const ADMIN_ID = 8030373785;
+const tg = window.Telegram?.WebApp;
+tg?.ready();
+tg?.expand();
+
+const initData = tg?.initData || "";
+const userId = tg?.initDataUnsafe?.user?.id;
+
+if (userId != ADMIN_ID) {
+  document.getElementById('root').innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;font-size:20px">⛔ Access Denied</div>';
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.innerHTML = `<div class="msg ${type}">${text}</div>`;
+  setTimeout(() => el.innerHTML = '', 4000);
+}
+
+async function apiCall(path, method='GET', body=null) {
+  const res = await fetch(`${API}${path}`, {
+    method,
+    headers: {'Content-Type': 'application/json', 'X-Init-Data': initData},
+    body: body ? JSON.stringify(body) : null
+  });
+  return res.json();
+}
+
+async function sendReward() {
+  const uid = parseInt(document.getElementById('uid').value);
+  const trx = parseFloat(document.getElementById('trx').value) || 0;
+  const ton = parseFloat(document.getElementById('ton').value) || 0;
+  if (!uid) { showMsg('Enter user ID', 'error'); return; }
+  if (!trx && !ton) { showMsg('Enter TRX or TON amount', 'error'); return; }
+  const data = await apiCall('/api/admin/reward', 'POST', {user_id: uid, trx, ton});
+  if (data.error) showMsg(data.error, 'error');
+  else showMsg(`✅ Sent! New balance: ${data.new_balance.toLocaleString()} TRX | ${data.new_ton} TON`, 'success');
+}
+
+async function loadWithdrawals() {
+  const data = await apiCall('/api/admin/withdrawals');
+  const el = document.getElementById('withdrawals');
+  if (!data.withdrawals || data.withdrawals.length === 0) {
+    el.innerHTML = '<p style="margin-top:8px">No pending withdrawals</p>';
+    return;
+  }
+  el.innerHTML = data.withdrawals.map(w => `
+    <div style="background:#1e293b;padding:12px;border-radius:8px;margin-top:8px">
+      <p>ID: ${w.id} | User: ${w.user_id}</p>
+      <p>Amount: ${w.amount} TON</p>
+      <p style="word-break:break-all">Wallet: ${w.wallet}</p>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn-green" style="margin:0" onclick="approve(${w.id})">✅ Approve</button>
+        <button class="btn-red" style="margin:0" onclick="reject(${w.id})">❌ Reject</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function approve(wid) {
+  const data = await apiCall(`/api/admin/approve/${wid}`, 'POST');
+  if (data.success) { showMsg('Approved!', 'success'); loadWithdrawals(); }
+}
+
+async function reject(wid) {
+  const data = await apiCall(`/api/admin/reject/${wid}`, 'POST');
+  if (data.success) { showMsg('Rejected!', 'success'); loadWithdrawals(); }
+}
+
+async function loadStats() {
+  const data = await apiCall('/api/admin/stats');
+  document.getElementById('stats').innerHTML = `
+    <p style="margin-top:8px;font-size:14px;color:white">👥 Total Users: <b style="color:#22d3ee">${data.total_users}</b></p>
+    <p style="font-size:14px;color:white">💸 Pending Withdrawals: <b style="color:#facc15">${data.pending_withdrawals}</b></p>
+  `;
+}
+
+loadStats();
+</script>
+</body>
+</html>
