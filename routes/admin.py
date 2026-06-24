@@ -7,7 +7,7 @@ from auth import parse_user
 
 admin_bp = Blueprint('admin', __name__)
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8935584033:AAGD6ICE5g0C5GPRAodt5XhK0gQlHUAd6jU")
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "8030373785"))
 
 def is_admin():
