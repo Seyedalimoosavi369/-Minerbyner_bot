@@ -17,25 +17,25 @@ const GITHUB_BASE = "https://raw.githubusercontent.com/Seyedalimoosavi369/-Miner
 const API = "https://web-production-aa8bad.up.railway.app";
 
 const ITEMS = [
-  { id: 1, name: "Basic Core", price: 10000, boost: 5, img: `${GITHUB_BASE}/f.png` },
-  { id: 2, name: "Quantum Rig", price: 20000, boost: 12, img: `${GITHUB_BASE}/g.png` },
-  { id: 3, name: "Nebula Core", price: 30000, boost: 25, img: `${GITHUB_BASE}/skek.png` },
-  { id: 4, name: "Nano Miner", price: 40000, boost: 45, img: `${GITHUB_BASE}/wkjw.png` },
-  { id: 5, name: "Ion Reactor", price: 50000, boost: 80, img: `${GITHUB_BASE}/sksk.png` },
-  { id: 6, name: "Dark Plasma", price: 60000, boost: 150, img: `${GITHUB_BASE}/sks.png` },
-  { id: 7, name: "Void Engine", price: 70000, boost: 300, img: `${GITHUB_BASE}/skks.png` },
-  { id: 8, name: "Gravity Drill", price: 80000, boost: 600, img: `${GITHUB_BASE}/sjjss.png` },
-  { id: 9, name: "Star Forge", price: 90000, boost: 1200, img: `${GITHUB_BASE}/sjjeuwjj.png` },
-  { id: 10, name: "Cyber Node", price: 100000, boost: 2500, img: `${GITHUB_BASE}/siieei.png` },
-  { id: 11, name: "Nova Matrix", price: 110000, boost: 5000, img: `${GITHUB_BASE}/nzz.png` },
-  { id: 12, name: "God Engine", price: 120000, boost: 10000, img: `${GITHUB_BASE}/jsjs.png` }
+  { id:1, name:"Basic Core", price:10000, boost:5, img:`${GITHUB_BASE}/f.png` },
+  { id:2, name:"Quantum Rig", price:20000, boost:12, img:`${GITHUB_BASE}/g.png` },
+  { id:3, name:"Nebula Core", price:30000, boost:25, img:`${GITHUB_BASE}/skek.png` },
+  { id:4, name:"Nano Miner", price:40000, boost:45, img:`${GITHUB_BASE}/wkjw.png` },
+  { id:5, name:"Ion Reactor", price:50000, boost:80, img:`${GITHUB_BASE}/sksk.png` },
+  { id:6, name:"Dark Plasma", price:60000, boost:150, img:`${GITHUB_BASE}/sks.png` },
+  { id:7, name:"Void Engine", price:70000, boost:300, img:`${GITHUB_BASE}/skks.png` },
+  { id:8, name:"Gravity Drill", price:80000, boost:600, img:`${GITHUB_BASE}/sjjss.png` },
+  { id:9, name:"Star Forge", price:90000, boost:1200, img:`${GITHUB_BASE}/sjjeuwjj.png` },
+  { id:10, name:"Cyber Node", price:100000, boost:2500, img:`${GITHUB_BASE}/siieei.png` },
+  { id:11, name:"Nova Matrix", price:110000, boost:5000, img:`${GITHUB_BASE}/nzz.png` },
+  { id:12, name:"God Engine", price:120000, boost:10000, img:`${GITHUB_BASE}/jsjs.png` }
 ];
 
-const SPECIAL_ARTIFACTS = [
-  { id: 'Z', items: [1,2,3], img: `${GITHUB_BASE}/Gemini_Generated_Image_3w0elk3w0elk3w0e.png` },
-  { id: 'E', items: [4,5,6], img: `${GITHUB_BASE}/Gemini_Generated_Image_eie1yceie1yceie1.png` },
-  { id: 'U', items: [7,8,9], img: `${GITHUB_BASE}/Gemini_Generated_Image_i7etji7etji7etji.png` },
-  { id: 'S', items: [10,11,12], img: `${GITHUB_BASE}/Gemini_Generated_Image_ow1889ow1889ow18.png` }
+const ARTIFACTS = [
+  { id:'Z', items:[1,2,3], img:`${GITHUB_BASE}/Gemini_Generated_Image_3w0elk3w0elk3w0e.png` },
+  { id:'E', items:[4,5,6], img:`${GITHUB_BASE}/Gemini_Generated_Image_eie1yceie1yceie1.png` },
+  { id:'U', items:[7,8,9], img:`${GITHUB_BASE}/Gemini_Generated_Image_i7etji7etji7etji.png` },
+  { id:'S', items:[10,11,12], img:`${GITHUB_BASE}/Gemini_Generated_Image_ow1889ow1889ow18.png` }
 ];
 
 const MILESTONES = [
@@ -49,142 +49,140 @@ const MILESTONES = [
 const MEDALS = ['🥇','🥈','🥉'];
 
 function App() {
-  const [activeTab, setActiveTab] = React.useState('Home');
-  const [userData, setUserData] = React.useState({balance:0,ton_balance:0,inventory:{},hashrate:0});
+  const [tab, setTab] = React.useState('Home');
+  const [user, setUser] = React.useState({balance:0,ton_balance:0,inventory:{},hashrate:0});
   const [loading, setLoading] = React.useState(true);
-  const [network, setNetwork] = React.useState({referrals:[],left_count:0,right_count:0,balance_milestone:0,rewards:[]});
-  const [leaderboard, setLeaderboard] = React.useState([]);
+  const [net, setNet] = React.useState({referrals:[],left_count:0,right_count:0,balance_milestone:0,rewards:[]});
+  const [lb, setLb] = React.useState([]);
   const [error, setError] = React.useState('');
 
   const tg = window.Telegram?.WebApp;
   const initData = tg?.initData || "";
   const ref = new URLSearchParams(window.location.search).get('ref') || "";
 
-  const apiCall = async (path, method='GET', body=null) => {
+  const api = async (path, method='GET', body=null) => {
     try {
-      const res = await fetch(`${API}${path}`, {
+      const r = await fetch(`${API}${path}`, {
         method,
-        headers: {'Content-Type':'application/json','X-Init-Data':initData},
+        headers:{'Content-Type':'application/json','X-Init-Data':initData},
         body: body ? JSON.stringify(body) : null
       });
-      return res.json();
-    } catch(e) { return {error: e.message}; }
+      return r.json();
+    } catch(e) { return {error:e.message}; }
   };
 
   React.useEffect(() => {
     tg?.ready(); tg?.expand();
-    apiCall('/api/user','POST',{ref}).then(data => {
-      if(data.error) setError(data.error);
-      else setUserData(data);
+    api('/api/user','POST',{ref}).then(d => {
+      if(d.error) setError(d.error);
+      else setUser(d);
       setLoading(false);
     });
-    apiCall('/api/leaderboard/hashrate').then(data => {
-      if(!data.error) setLeaderboard(data.leaderboard || []);
+    api('/api/leaderboard/hashrate').then(d => {
+      if(!d.error) setLb(d.leaderboard||[]);
     });
   }, []);
 
   React.useEffect(() => {
-    const interval = setInterval(() => {
-      setUserData(prev => prev.hashrate > 0 ? {...prev, balance: prev.balance + prev.hashrate/10} : prev);
+    const t = setInterval(() => {
+      setUser(p => p.hashrate>0 ? {...p,balance:p.balance+p.hashrate/10} : p);
     }, 1000);
-    return () => clearInterval(interval);
+    return () => clearInterval(t);
   }, []);
 
-  const handleClick = async () => {
-    const data = await apiCall('/api/click','POST');
-    if(!data.error) setUserData(prev => ({...prev, balance: data.balance}));
+  const click = async () => {
+    const d = await api('/api/click','POST');
+    if(!d.error) setUser(p=>({...p,balance:d.balance}));
   };
 
-  const handleBuy = async (item) => {
-    const data = await apiCall('/api/buy','POST',{item_id: item.id});
-    if(data.error) alert(data.error);
-    else setUserData(prev => ({...prev, balance:data.balance, ton_balance:data.ton_balance, inventory:data.inventory, hashrate:data.hashrate}));
+  const buy = async (item) => {
+    const d = await api('/api/buy','POST',{item_id:item.id});
+    if(d.error) alert(d.error);
+    else setUser(p=>({...p,balance:d.balance,ton_balance:d.ton_balance,inventory:d.inventory,hashrate:d.hashrate}));
   };
 
-  const handleConvert = async (dir) => {
-    const data = await apiCall('/api/convert','POST',{direction:dir});
-    if(data.error) alert(data.error);
-    else setUserData(prev => ({...prev, balance:data.balance, ton_balance:data.ton_balance}));
+  const convert = async (dir) => {
+    const d = await api('/api/convert','POST',{direction:dir});
+    if(d.error) alert(d.error);
+    else setUser(p=>({...p,balance:d.balance,ton_balance:d.ton_balance}));
   };
 
-  const handleWithdraw = async () => {
+  const withdraw = async () => {
     const wallet = prompt("Enter TON wallet address:");
     if(!wallet) return;
     const amount = parseFloat(prompt("Amount (min 100 TON):"));
-    if(!amount || amount < 100) { alert("Minimum 100 TON"); return; }
-    const data = await apiCall('/api/withdraw','POST',{amount, wallet});
-    if(data.error) alert(data.error);
+    if(!amount||amount<100){alert("Minimum 100 TON");return;}
+    const d = await api('/api/withdraw','POST',{amount,wallet});
+    if(d.error) alert(d.error);
     else alert("Withdrawal request sent!");
   };
 
-  const loadNetwork = async () => {
-    const data = await apiCall('/api/team');
-    if(!data.error) setNetwork(data);
+  const loadNet = async () => {
+    const d = await api('/api/team');
+    if(!d.error) setNet(d);
   };
 
-  const loadLeaderboard = async () => {
-    const data = await apiCall('/api/leaderboard/hashrate');
-    if(!data.error) setLeaderboard(data.leaderboard || []);
+  const loadLb = async () => {
+    const d = await api('/api/leaderboard/hashrate');
+    if(!d.error) setLb(d.leaderboard||[]);
   };
 
-  const getReferralLink = () => {
-    const uid = tg?.initDataUnsafe?.user?.id || '';
-    return `https://t.me/Minerbyner_bot?start=${uid}`;
-  };
+  const refLink = () => `https://t.me/Minerbyner_bot?start=${tg?.initDataUnsafe?.user?.id||''}`;
 
   const copyLink = () => {
-    const link = getReferralLink();
-    if(navigator.clipboard) navigator.clipboard.writeText(link);
-    alert("Copied!\n" + link);
+    const l = refLink();
+    if(navigator.clipboard) navigator.clipboard.writeText(l);
+    alert("Copied!\n"+l);
   };
 
   if(loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',fontSize:24,color:'#22d3ee'}}>Loading...</div>;
   if(error) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:16,padding:24,textAlign:'center'}}><div style={{fontSize:40}}>⚠️</div><div style={{color:'#ef4444'}}>{error}</div></div>;
 
-  const inv = userData.inventory || {};
-  const nextMilestone = MILESTONES[network.balance_milestone] || null;
-  const top3 = leaderboard.slice(0,3);
+  const inv = user.inventory||{};
+  const top3 = lb.slice(0,3);
+  const nextMs = MILESTONES[net.balance_milestone]||null;
 
   return (
     <div style={{background:'#020617',color:'#f1f5f9',minHeight:'100vh',paddingBottom:80}}>
-      <div style={{padding:'16px',borderBottom:'1px solid #1e293b',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+      <div style={{padding:'14px 16px',borderBottom:'1px solid #1e293b',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <span style={{fontWeight:'bold',color:'#22d3ee',fontSize:18}}>⚡ MINER PRO</span>
         <div style={{textAlign:'right',fontSize:12}}>
-          <div style={{color:'#facc15',fontWeight:'bold'}}>{Math.floor(userData.balance).toLocaleString()} TRX</div>
-          <div style={{color:'#60a5fa',fontWeight:'bold'}}>{(userData.ton_balance||0).toFixed(2)} TON</div>
+          <div style={{color:'#facc15',fontWeight:'bold'}}>{Math.floor(user.balance).toLocaleString()} TRX</div>
+          <div style={{color:'#60a5fa',fontWeight:'bold'}}>{(user.ton_balance||0).toFixed(2)} TON</div>
         </div>
       </div>
 
       <div style={{padding:16}}>
-        {activeTab==='Home' && (
+
+        {tab==='Home' && (
           <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:16}}>
-            {top3.length > 0 && (
-              <div style={{width:'100%',background:'#0f172a',borderRadius:12,padding:12,border:'1px solid #1e293b'}}>
-                <p style={{textAlign:'center',fontSize:11,color:'#94a3b8',marginBottom:8}}>🏆 Top Miners</p>
+            {top3.length>0 && (
+              <div style={{width:'100%',background:'#0f172a',borderRadius:12,padding:12,border:'1px solid #facc1544'}}>
+                <p style={{textAlign:'center',fontSize:11,color:'#facc15',marginBottom:10,fontWeight:'bold'}}>🏆 Top Miners</p>
                 <div style={{display:'flex',justifyContent:'space-around'}}>
-                  {top3.map((u,i) => (
+                  {top3.map((u,i)=>(
                     <div key={u.user_id} style={{textAlign:'center'}}>
-                      <div style={{fontSize:20}}>{MEDALS[i]}</div>
-                      <div style={{fontSize:10,color:'white',fontWeight:'bold'}}>{u.first_name?.slice(0,8)}</div>
-                      <div style={{fontSize:9,color:'#22d3ee'}}>{u.hashrate}/s</div>
-                      <div style={{fontSize:9,color:'#94a3b8'}}>{u.referrals} refs</div>
+                      <div style={{fontSize:22}}>{MEDALS[i]}</div>
+                      <div style={{fontSize:11,color:'white',fontWeight:'bold',marginTop:2}}>{u.first_name?.slice(0,8)}</div>
+                      <div style={{fontSize:10,color:'#22d3ee'}}>⚡ {u.hashrate}/s</div>
+                      <div style={{fontSize:10,color:'#94a3b8'}}>👥 {u.referrals}</div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            <button onClick={handleClick} style={{width:160,height:160,borderRadius:'50%',border:'4px solid #22d3ee',background:'#0f172a',cursor:'pointer',fontSize:60,boxShadow:'0 0 30px #22d3ee55'}}>⚡</button>
-            <p style={{color:'#94a3b8'}}>Hashrate: <span style={{color:'#22d3ee',fontWeight:'bold'}}>{userData.hashrate||0}</span>/s</p>
+            <button onClick={click} style={{width:160,height:160,borderRadius:'50%',border:'4px solid #22d3ee',background:'#0f172a',cursor:'pointer',fontSize:60,boxShadow:'0 0 30px #22d3ee55'}}>⚡</button>
+            <p style={{color:'#94a3b8'}}>Hashrate: <span style={{color:'#22d3ee',fontWeight:'bold'}}>{user.hashrate||0}</span>/s</p>
             <p style={{color:'#64748b',fontSize:12}}>Tap to mine TRX!</p>
           </div>
         )}
 
-        {activeTab==='Shop' && (
+        {tab==='Shop' && (
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
-            {ITEMS.map(item => {
-              const level = inv[String(item.id)] || 0;
-              const isTon = level >= 10;
-              const cost = isTon ? Math.pow(2, level-10) : item.price * Math.pow(2, level);
+            {ITEMS.map(item=>{
+              const level=inv[String(item.id)]||0;
+              const isTon=level>=10;
+              const cost=isTon?Math.pow(2,level-10):item.price*Math.pow(2,level);
               return (
                 <div key={item.id} style={{background:'#0f172a',padding:12,borderRadius:12,display:'flex',alignItems:'center',gap:12,border:'1px solid #1e293b'}}>
                   <img src={item.img} style={{width:48,height:48,borderRadius:8,objectFit:'cover'}} onError={e=>e.target.style.display='none'} />
@@ -193,49 +191,48 @@ function App() {
                     <div style={{color:'#94a3b8'}}>Lv {level} | +{item.boost*level}/s</div>
                     <div style={{color:isTon?'#60a5fa':'#eab308',fontWeight:'bold'}}>{cost.toLocaleString()} {isTon?'TON':'TRX'}</div>
                   </div>
-                  <button onClick={()=>handleBuy(item)} style={{background:'#0e7490',padding:'8px 12px',borderRadius:8,border:'none',color:'white',fontSize:10,fontWeight:'bold',cursor:'pointer'}}>UPGRADE</button>
+                  <button onClick={()=>buy(item)} style={{background:'#0e7490',padding:'8px 12px',borderRadius:8,border:'none',color:'white',fontSize:10,fontWeight:'bold',cursor:'pointer'}}>UPGRADE</button>
                 </div>
               );
             })}
           </div>
         )}
 
-        {activeTab==='Network' && (
+        {tab==='Network' && (
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <div style={{background:'#0f172a',padding:16,borderRadius:12,border:'1px solid #1e293b',textAlign:'center'}}>
               <p style={{color:'#94a3b8',fontSize:12,marginBottom:8}}>Your referral link:</p>
-              <p style={{color:'#22d3ee',fontSize:11,wordBreak:'break-all',marginBottom:12}}>{getReferralLink()}</p>
+              <p style={{color:'#22d3ee',fontSize:11,wordBreak:'break-all',marginBottom:12}}>{refLink()}</p>
               <button onClick={copyLink} style={{background:'#0e7490',padding:'8px 24px',borderRadius:8,border:'none',color:'white',fontWeight:'bold',cursor:'pointer'}}>📋 Copy Link</button>
             </div>
             <div style={{background:'#0f172a',padding:16,borderRadius:12,border:'1px solid #1e293b'}}>
               <p style={{textAlign:'center',fontWeight:'bold',marginBottom:12,color:'#22d3ee'}}>🌲 Binary Network</p>
               <div style={{display:'flex',justifyContent:'space-around'}}>
-                <div style={{textAlign:'center'}}>
-                  <p style={{color:'#94a3b8',fontSize:12}}>Left</p>
-                  <p style={{fontSize:24,fontWeight:'bold',color:'#22d3ee'}}>{network.left_count||0}</p>
-                </div>
-                <div style={{textAlign:'center'}}>
-                  <p style={{color:'#94a3b8',fontSize:12}}>Right</p>
-                  <p style={{fontSize:24,fontWeight:'bold',color:'#22d3ee'}}>{network.right_count||0}</p>
-                </div>
-                <div style={{textAlign:'center'}}>
-                  <p style={{color:'#94a3b8',fontSize:12}}>Total</p>
-                  <p style={{fontSize:24,fontWeight:'bold',color:'#facc15'}}>{(network.referrals||[]).length}</p>
-                </div>
+                <div style={{textAlign:'center'}}><p style={{color:'#94a3b8',fontSize:12}}>Left</p><p style={{fontSize:24,fontWeight:'bold',color:'#22d3ee'}}>{net.left_count||0}</p></div>
+                <div style={{textAlign:'center'}}><p style={{color:'#94a3b8',fontSize:12}}>Right</p><p style={{fontSize:24,fontWeight:'bold',color:'#22d3ee'}}>{net.right_count||0}</p></div>
+                <div style={{textAlign:'center'}}><p style={{color:'#94a3b8',fontSize:12}}>Total</p><p style={{fontSize:24,fontWeight:'bold',color:'#facc15'}}>{(net.referrals||[]).length}</p></div>
               </div>
             </div>
-            {nextMilestone && (
+            {nextMs && (
               <div style={{background:'#1e1b4b',padding:16,borderRadius:12,border:'1px solid #6366f1'}}>
                 <p style={{textAlign:'center',fontWeight:'bold',marginBottom:8,color:'#a5b4fc'}}>🎯 Next Milestone</p>
-                <p style={{textAlign:'center',fontSize:12,color:'#94a3b8'}}>L: {network.left_count||0}/{nextMilestone.left} | R: {network.right_count||0}/{nextMilestone.right}</p>
-                <p style={{textAlign:'center',fontSize:12,color:'#facc15',marginTop:4}}>Reward: {nextMilestone.trx.toLocaleString()} TRX {nextMilestone.ton>0?`+ ${nextMilestone.ton} TON`:''}</p>
+                <p style={{textAlign:'center',fontSize:12,color:'#94a3b8'}}>L: {net.left_count||0}/{nextMs.left} | R: {net.right_count||0}/{nextMs.right}</p>
+                <p style={{textAlign:'center',fontSize:12,color:'#facc15',marginTop:4}}>Reward: {nextMs.trx.toLocaleString()} TRX {nextMs.ton>0?`+ ${nextMs.ton} TON`:''}</p>
                 <div style={{background:'#312e81',borderRadius:8,height:8,marginTop:8}}>
-                  <div style={{background:'#6366f1',borderRadius:8,height:8,width:`${Math.min(100,Math.min((network.left_count||0)/nextMilestone.left,(network.right_count||0)/nextMilestone.right)*100)}%`}}></div>
+                  <div style={{background:'#6366f1',borderRadius:8,height:8,width:`${Math.min(100,Math.min((net.left_count||0)/nextMs.left,(net.right_count||0)/nextMs.right)*100)}%`}}></div>
                 </div>
               </div>
             )}
-            <button onClick={loadNetwork} style={{background:'#1e293b',padding:12,borderRadius:8,border:'none',color:'white',cursor:'pointer'}}>🔄 Refresh</button>
-            {(network.referrals||[]).map(r => (
+            {(net.rewards||[]).length>0 && (
+              <div style={{background:'#0f172a',padding:12,borderRadius:12,border:'1px solid #1e293b'}}>
+                <p style={{fontWeight:'bold',marginBottom:8,color:'#facc15'}}>🏆 Rewards Earned</p>
+                {net.rewards.map((r,i)=>(
+                  <p key={i} style={{fontSize:12,color:'#94a3b8'}}>Milestone {r.milestone}: {r.reward_trx.toLocaleString()} TRX {r.reward_ton>0?`+ ${r.reward_ton} TON`:''}</p>
+                ))}
+              </div>
+            )}
+            <button onClick={loadNet} style={{background:'#1e293b',padding:12,borderRadius:8,border:'none',color:'white',cursor:'pointer'}}>🔄 Refresh</button>
+            {(net.referrals||[]).map(r=>(
               <div key={r.user_id} style={{background:'#0f172a',padding:12,borderRadius:8,border:'1px solid #1e293b',fontSize:12}}>
                 <div style={{fontWeight:'bold'}}>{r.first_name} {r.username?`@${r.username}`:''}</div>
                 <div style={{color:'#facc15'}}>{Math.floor(r.balance).toLocaleString()} TRX</div>
@@ -244,12 +241,12 @@ function App() {
           </div>
         )}
 
-        {activeTab==='Leaderboard' && (
+        {tab==='Leaderboard' && (
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
-            <button onClick={loadLeaderboard} style={{background:'#1e293b',padding:12,borderRadius:8,border:'none',color:'white',cursor:'pointer'}}>🔄 Refresh</button>
-            {leaderboard.map((u,i) => (
+            <button onClick={loadLb} style={{background:'#1e293b',padding:12,borderRadius:8,border:'none',color:'white',cursor:'pointer'}}>🔄 Refresh</button>
+            {lb.map((u,i)=>(
               <div key={u.user_id} style={{background:'#0f172a',padding:12,borderRadius:12,border:`1px solid ${i<3?'#facc15':'#1e293b'}`,display:'flex',alignItems:'center',gap:12}}>
-                <div style={{fontSize:24,width:32,textAlign:'center'}}>{i<3?MEDALS[i]:`${i+1}`}</div>
+                <div style={{fontSize:22,width:32,textAlign:'center'}}>{i<3?MEDALS[i]:`${i+1}`}</div>
                 <div style={{flex:1}}>
                   <div style={{fontWeight:'bold',fontSize:13}}>{u.first_name} {u.username?`@${u.username}`:''}</div>
                   <div style={{fontSize:11,color:'#22d3ee'}}>⚡ {u.hashrate}/s</div>
@@ -257,15 +254,16 @@ function App() {
                 </div>
               </div>
             ))}
+            {lb.length===0 && <p style={{textAlign:'center',color:'#64748b'}}>No data yet</p>}
           </div>
         )}
 
-        {activeTab==='Profile' && (
+        {tab==='Profile' && (
           <div style={{display:'flex',flexDirection:'column',gap:16}}>
             <h2 style={{textAlign:'center',fontWeight:'bold'}}>🏆 ARTIFACTS</h2>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-              {SPECIAL_ARTIFACTS.map(art => {
-                const unlocked = art.items.every(id => (inv[String(id)]||0) > 0);
+              {ARTIFACTS.map(art=>{
+                const unlocked=art.items.every(id=>(inv[String(id)]||0)>0);
                 return (
                   <div key={art.id} style={{padding:12,borderRadius:12,border:`1px solid ${unlocked?'#6366f1':'#1e293b'}`,background:unlocked?'#1e1b4b':'#0f172a',opacity:unlocked?1:0.5}}>
                     <img src={art.img} style={{width:'100%',height:80,objectFit:'cover',borderRadius:8,marginBottom:8}} onError={e=>e.target.style.display='none'} />
@@ -277,25 +275,26 @@ function App() {
           </div>
         )}
 
-        {activeTab==='Wallet' && (
+        {tab==='Wallet' && (
           <div style={{background:'#0f172a',padding:16,borderRadius:16,border:'1px solid #1e293b',textAlign:'center',display:'flex',flexDirection:'column',gap:16}}>
             <h2 style={{color:'#60a5fa',fontWeight:'bold'}}>💎 TON Wallet</h2>
-            <div style={{fontSize:20,fontWeight:'bold',color:'#60a5fa'}}>{(userData.ton_balance||0).toFixed(2)} TON</div>
+            <div style={{fontSize:20,fontWeight:'bold',color:'#60a5fa'}}>{(user.ton_balance||0).toFixed(2)} TON</div>
             <p style={{fontSize:11,color:'#94a3b8'}}>10,000,000 TRX = 1 TON</p>
             <div style={{display:'flex',justifyContent:'center',gap:8}}>
-              <button onClick={()=>handleConvert('trx_to_ton')} style={{background:'#15803d',padding:'10px 16px',borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>TRX → TON</button>
-              <button onClick={()=>handleConvert('ton_to_trx')} style={{background:'#b91c1c',padding:'10px 16px',borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>TON → TRX</button>
+              <button onClick={()=>convert('trx_to_ton')} style={{background:'#15803d',padding:'10px 16px',borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>TRX → TON</button>
+              <button onClick={()=>convert('ton_to_trx')} style={{background:'#b91c1c',padding:'10px 16px',borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>TON → TRX</button>
             </div>
             <button onClick={()=>window.open('ton://transfer/UQCs20TzgI5bmr5TJo3PigiEn0DMJhWktPOw7bo27K2FVZwI','_blank')} style={{width:'100%',background:'#1d4ed8',padding:14,borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>💳 DEPOSIT TON</button>
-            <button onClick={handleWithdraw} style={{width:'100%',background:'#334155',padding:14,borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>💸 WITHDRAW (MIN 100 TON)</button>
+            <button onClick={withdraw} style={{width:'100%',background:'#334155',padding:14,borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>💸 WITHDRAW (MIN 100 TON)</button>
           </div>
         )}
+
       </div>
 
       <nav style={{position:'fixed',bottom:0,width:'100%',background:'#020617',borderTop:'1px solid #1e293b',display:'flex',justifyContent:'space-around',padding:'8px 0'}}>
-        {[['Home','🏠'],['Network','🌐'],['Shop','🛒'],['Leaderboard','🏆'],['Wallet','💎']].map(([tab,icon])=>(
-          <button key={tab} onClick={()=>{setActiveTab(tab);if(tab==='Network')loadNetwork();if(tab==='Leaderboard')loadLeaderboard();}} style={{background:'none',border:'none',color:activeTab===tab?'#22d3ee':'#64748b',fontSize:20,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:1}}>
-            {icon}<span style={{fontSize:8,color:activeTab===tab?'#22d3ee':'#64748b'}}>{tab}</span>
+        {[['Home','🏠'],['Network','🌐'],['Shop','🛒'],['Leaderboard','🏆'],['Profile','👤'],['Wallet','💎']].map(([t,icon])=>(
+          <button key={t} onClick={()=>{setTab(t);if(t==='Network')loadNet();if(t==='Leaderboard')loadLb();}} style={{background:'none',border:'none',color:tab===t?'#22d3ee':'#64748b',fontSize:18,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:1}}>
+            {icon}<span style={{fontSize:8,color:tab===t?'#22d3ee':'#64748b'}}>{t}</span>
           </button>
         ))}
       </nav>
