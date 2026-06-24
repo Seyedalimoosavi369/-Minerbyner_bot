@@ -8,10 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #020617; color: #f1f5f9; font-family: sans-serif; }
-</style>
+<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#020617;color:#f1f5f9;font-family:sans-serif;}</style>
 </head>
 <body>
 <div id="root"></div>
@@ -20,18 +17,18 @@ const GITHUB_BASE = "https://raw.githubusercontent.com/Seyedalimoosavi369/-Miner
 const API = "https://web-production-aa8bad.up.railway.app";
 
 const ITEMS = [
-  { id: 1, name: "Basic Core", price: 1000, boost: 5, img: `${GITHUB_BASE}/f.png` },
-  { id: 2, name: "Quantum Rig", price: 2000, boost: 12, img: `${GITHUB_BASE}/g.png` },
-  { id: 3, name: "Nebula Core", price: 4000, boost: 25, img: `${GITHUB_BASE}/skek.png` },
-  { id: 4, name: "Nano Miner", price: 8000, boost: 45, img: `${GITHUB_BASE}/wkjw.png` },
-  { id: 5, name: "Ion Reactor", price: 16000, boost: 80, img: `${GITHUB_BASE}/sksk.png` },
-  { id: 6, name: "Dark Plasma", price: 32000, boost: 150, img: `${GITHUB_BASE}/sks.png` },
-  { id: 7, name: "Void Engine", price: 64000, boost: 300, img: `${GITHUB_BASE}/skks.png` },
-  { id: 8, name: "Gravity Drill", price: 128000, boost: 600, img: `${GITHUB_BASE}/sjjss.png` },
-  { id: 9, name: "Star Forge", price: 256000, boost: 1200, img: `${GITHUB_BASE}/sjjeuwjj.png` },
-  { id: 10, name: "Cyber Node", price: 512000, boost: 2500, img: `${GITHUB_BASE}/siieei.png` },
-  { id: 11, name: "Nova Matrix", price: 1000000, boost: 5000, img: `${GITHUB_BASE}/nzz.png` },
-  { id: 12, name: "God Engine", price: 2000000, boost: 10000, img: `${GITHUB_BASE}/jsjs.png` }
+  { id: 1, name: "Basic Core", price: 10000, boost: 5, img: `${GITHUB_BASE}/f.png` },
+  { id: 2, name: "Quantum Rig", price: 20000, boost: 12, img: `${GITHUB_BASE}/g.png` },
+  { id: 3, name: "Nebula Core", price: 30000, boost: 25, img: `${GITHUB_BASE}/skek.png` },
+  { id: 4, name: "Nano Miner", price: 40000, boost: 45, img: `${GITHUB_BASE}/wkjw.png` },
+  { id: 5, name: "Ion Reactor", price: 50000, boost: 80, img: `${GITHUB_BASE}/sksk.png` },
+  { id: 6, name: "Dark Plasma", price: 60000, boost: 150, img: `${GITHUB_BASE}/sks.png` },
+  { id: 7, name: "Void Engine", price: 70000, boost: 300, img: `${GITHUB_BASE}/skks.png` },
+  { id: 8, name: "Gravity Drill", price: 80000, boost: 600, img: `${GITHUB_BASE}/sjjss.png` },
+  { id: 9, name: "Star Forge", price: 90000, boost: 1200, img: `${GITHUB_BASE}/sjjeuwjj.png` },
+  { id: 10, name: "Cyber Node", price: 100000, boost: 2500, img: `${GITHUB_BASE}/siieei.png` },
+  { id: 11, name: "Nova Matrix", price: 110000, boost: 5000, img: `${GITHUB_BASE}/nzz.png` },
+  { id: 12, name: "God Engine", price: 120000, boost: 10000, img: `${GITHUB_BASE}/jsjs.png` }
 ];
 
 const SPECIAL_ARTIFACTS = [
@@ -41,115 +38,100 @@ const SPECIAL_ARTIFACTS = [
   { id: 'S', items: [10,11,12], img: `${GITHUB_BASE}/Gemini_Generated_Image_ow1889ow1889ow18.png` }
 ];
 
+const MILESTONES = [
+  {left:10, right:10, trx:10000000, ton:0},
+  {left:50, right:50, trx:20000000, ton:0},
+  {left:100, right:100, trx:50000000, ton:0},
+  {left:1000, right:1000, trx:70000000, ton:0},
+  {left:10000, right:10000, trx:100000000, ton:1},
+];
+
 function App() {
   const [activeTab, setActiveTab] = React.useState('Home');
-  const [userData, setUserData] = React.useState({ balance: 0, ton_balance: 0, inventory: {}, hashrate: 0 });
+  const [userData, setUserData] = React.useState({balance:0,ton_balance:0,inventory:{},hashrate:0});
   const [loading, setLoading] = React.useState(true);
-  const [team, setTeam] = React.useState([]);
+  const [network, setNetwork] = React.useState({referrals:[],left_count:0,right_count:0,balance_milestone:0,rewards:[]});
   const [error, setError] = React.useState('');
 
   const tg = window.Telegram?.WebApp;
   const initData = tg?.initData || "";
   const ref = new URLSearchParams(window.location.search).get('ref') || "";
 
-  const apiCall = async (path, method = 'GET', body = null) => {
+  const apiCall = async (path, method='GET', body=null) => {
     try {
       const res = await fetch(`${API}${path}`, {
         method,
-        headers: { 'Content-Type': 'application/json', 'X-Init-Data': initData },
+        headers: {'Content-Type':'application/json','X-Init-Data':initData},
         body: body ? JSON.stringify(body) : null
       });
       return res.json();
-    } catch(e) {
-      return { error: e.message };
-    }
+    } catch(e) { return {error: e.message}; }
   };
 
   React.useEffect(() => {
-    tg?.ready();
-    tg?.expand();
-    apiCall('/api/user', 'POST', { ref }).then(data => {
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setUserData(data);
-      }
+    tg?.ready(); tg?.expand();
+    apiCall('/api/user','POST',{ref}).then(data => {
+      if(data.error) setError(data.error);
+      else setUserData(data);
       setLoading(false);
     });
   }, []);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
-      setUserData(prev => {
-        if (prev.hashrate > 0) {
-          return { ...prev, balance: prev.balance + prev.hashrate / 10 };
-        }
-        return prev;
-      });
+      setUserData(prev => prev.hashrate > 0 ? {...prev, balance: prev.balance + prev.hashrate/10} : prev);
     }, 1000);
     return () => clearInterval(interval);
   }, []);
 
   const handleClick = async () => {
-    const data = await apiCall('/api/click', 'POST');
-    if (!data.error) {
-      setUserData(prev => ({ ...prev, balance: data.balance }));
-    }
+    const data = await apiCall('/api/click','POST');
+    if(!data.error) setUserData(prev => ({...prev, balance: data.balance}));
   };
 
   const handleBuy = async (item) => {
-    const data = await apiCall('/api/buy', 'POST', { item_id: item.id });
-    if (data.error) alert(data.error);
-    else setUserData(prev => ({ ...prev, balance: data.balance, ton_balance: data.ton_balance, inventory: data.inventory }));
+    const data = await apiCall('/api/buy','POST',{item_id: item.id});
+    if(data.error) alert(data.error);
+    else setUserData(prev => ({...prev, balance:data.balance, ton_balance:data.ton_balance, inventory:data.inventory, hashrate:data.hashrate}));
   };
 
-  const handleConvert = async (direction) => {
-    const data = await apiCall('/api/convert', 'POST', { direction });
-    if (data.error) alert(data.error);
-    else setUserData(prev => ({ ...prev, balance: data.balance, ton_balance: data.ton_balance }));
+  const handleConvert = async (dir) => {
+    const data = await apiCall('/api/convert','POST',{direction:dir});
+    if(data.error) alert(data.error);
+    else setUserData(prev => ({...prev, balance:data.balance, ton_balance:data.ton_balance}));
   };
 
   const handleWithdraw = async () => {
-    const wallet = prompt("Enter your TON wallet address:");
-    if (!wallet) return;
-    const data = await apiCall('/api/withdraw', 'POST', { amount: 10, wallet });
-    if (data.error) alert(data.error);
+    const wallet = prompt("Enter TON wallet address:");
+    if(!wallet) return;
+    const amount = parseFloat(prompt("Amount (min 100 TON):"));
+    if(!amount || amount < 100) { alert("Minimum 100 TON"); return; }
+    const data = await apiCall('/api/withdraw','POST',{amount, wallet});
+    if(data.error) alert(data.error);
     else alert("Withdrawal request sent!");
   };
 
-  const loadTeam = async () => {
+  const loadNetwork = async () => {
     const data = await apiCall('/api/team');
-    if (!data.error) setTeam(data.referrals || []);
+    if(!data.error) setNetwork(data);
   };
 
   const getReferralLink = () => {
-    const userId = tg?.initDataUnsafe?.user?.id || '';
-    return `https://t.me/Minerbyner_bot?start=${userId}`;
+    const uid = tg?.initDataUnsafe?.user?.id || '';
+    return `https://t.me/Minerbyner_bot?start=${uid}`;
   };
 
   const copyLink = () => {
     const link = getReferralLink();
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(link);
-    }
-    alert("Link copied!\n" + link);
+    if(navigator.clipboard) navigator.clipboard.writeText(link);
+    alert("Copied!\n" + link);
   };
 
-  if (loading) return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',fontSize:24,color:'#22d3ee'}}>
-      Loading...
-    </div>
-  );
-
-  if (error) return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:16,padding:24,textAlign:'center'}}>
-      <div style={{fontSize:40}}>⚠️</div>
-      <div style={{color:'#ef4444'}}>Error: {error}</div>
-      <div style={{color:'#94a3b8',fontSize:12}}>Open from Telegram bot</div>
-    </div>
-  );
+  if(loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',fontSize:24,color:'#22d3ee'}}>Loading...</div>;
+  if(error) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:16,padding:24,textAlign:'center'}}><div style={{fontSize:40}}>⚠️</div><div style={{color:'#ef4444'}}>{error}</div></div>;
 
   const inv = userData.inventory || {};
+  const nextMilestone = MILESTONES[network.balance_milestone] || null;
 
   return (
     <div style={{background:'#020617',color:'#f1f5f9',minHeight:'100vh',paddingBottom:80}}>
@@ -162,64 +144,97 @@ function App() {
       </div>
 
       <div style={{padding:16}}>
-        {activeTab === 'Home' && (
+        {activeTab==='Home' && (
           <div style={{display:'flex',flexDirection:'column',alignItems:'center',paddingTop:40,gap:16}}>
-            <button onClick={handleClick} style={{width:160,height:160,borderRadius:'50%',border:'4px solid #22d3ee',background:'#0f172a',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:60,boxShadow:'0 0 30px #22d3ee55'}}>
-              ⚡
-            </button>
-            <p style={{color:'#94a3b8'}}>Hashrate: <span style={{color:'#22d3ee',fontWeight:'bold'}}>{userData.hashrate || 0}</span>/s</p>
+            <button onClick={handleClick} style={{width:160,height:160,borderRadius:'50%',border:'4px solid #22d3ee',background:'#0f172a',cursor:'pointer',fontSize:60,boxShadow:'0 0 30px #22d3ee55'}}>⚡</button>
+            <p style={{color:'#94a3b8'}}>Hashrate: <span style={{color:'#22d3ee',fontWeight:'bold'}}>{userData.hashrate||0}</span>/s</p>
             <p style={{color:'#64748b',fontSize:12}}>Tap to mine TRX!</p>
           </div>
         )}
 
-        {activeTab === 'Shop' && (
+        {activeTab==='Shop' && (
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             {ITEMS.map(item => {
               const level = inv[String(item.id)] || 0;
               const isTon = level >= 10;
-              const cost = isTon ? 1 : Math.floor(item.price * Math.pow(1.5, level));
+              const cost = isTon ? Math.pow(2, level-10) : item.price * Math.pow(2, level);
               return (
                 <div key={item.id} style={{background:'#0f172a',padding:12,borderRadius:12,display:'flex',alignItems:'center',gap:12,border:'1px solid #1e293b'}}>
-                  <img src={item.img} style={{width:48,height:48,borderRadius:8,objectFit:'cover'}} onError={e=>{e.target.style.background='#1e293b';e.target.src='';}} />
+                  <img src={item.img} style={{width:48,height:48,borderRadius:8,objectFit:'cover'}} onError={e=>e.target.style.display='none'} />
                   <div style={{flex:1,fontSize:12}}>
                     <div style={{fontWeight:'bold'}}>{item.name}</div>
-                    <div style={{color:'#94a3b8'}}>Level: {level} | +{item.boost * level}/s</div>
-                    <div style={{color: isTon ? '#60a5fa' : '#eab308',fontWeight:'bold'}}>{cost.toLocaleString()} {isTon ? 'TON' : 'TRX'}</div>
+                    <div style={{color:'#94a3b8'}}>Lv {level} | +{item.boost*level}/s</div>
+                    <div style={{color:isTon?'#60a5fa':'#eab308',fontWeight:'bold'}}>{cost.toLocaleString()} {isTon?'TON':'TRX'}</div>
                   </div>
-                  <button onClick={() => handleBuy(item)} style={{background:'#0e7490',padding:'8px 12px',borderRadius:8,border:'none',color:'white',fontSize:10,fontWeight:'bold',cursor:'pointer'}}>UPGRADE</button>
+                  <button onClick={()=>handleBuy(item)} style={{background:'#0e7490',padding:'8px 12px',borderRadius:8,border:'none',color:'white',fontSize:10,fontWeight:'bold',cursor:'pointer'}}>UPGRADE</button>
                 </div>
               );
             })}
           </div>
         )}
 
-        {activeTab === 'Network' && (
+        {activeTab==='Network' && (
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <div style={{background:'#0f172a',padding:16,borderRadius:12,border:'1px solid #1e293b',textAlign:'center'}}>
               <p style={{color:'#94a3b8',fontSize:12,marginBottom:8}}>Your referral link:</p>
               <p style={{color:'#22d3ee',fontSize:11,wordBreak:'break-all',marginBottom:12}}>{getReferralLink()}</p>
               <button onClick={copyLink} style={{background:'#0e7490',padding:'8px 24px',borderRadius:8,border:'none',color:'white',fontWeight:'bold',cursor:'pointer'}}>📋 Copy Link</button>
             </div>
-            <div style={{background:'#0f172a',padding:12,borderRadius:12,border:'1px solid #1e293b',textAlign:'center'}}>
-              <p style={{color:'#94a3b8',fontSize:12}}>Team members: <span style={{color:'#22d3ee',fontWeight:'bold'}}>{team.length}</span></p>
+
+            <div style={{background:'#0f172a',padding:16,borderRadius:12,border:'1px solid #1e293b'}}>
+              <p style={{textAlign:'center',fontWeight:'bold',marginBottom:12,color:'#22d3ee'}}>🌲 Binary Network</p>
+              <div style={{display:'flex',justifyContent:'space-around'}}>
+                <div style={{textAlign:'center'}}>
+                  <p style={{color:'#94a3b8',fontSize:12}}>Left</p>
+                  <p style={{fontSize:24,fontWeight:'bold',color:'#22d3ee'}}>{network.left_count||0}</p>
+                </div>
+                <div style={{textAlign:'center'}}>
+                  <p style={{color:'#94a3b8',fontSize:12}}>Right</p>
+                  <p style={{fontSize:24,fontWeight:'bold',color:'#22d3ee'}}>{network.right_count||0}</p>
+                </div>
+                <div style={{textAlign:'center'}}>
+                  <p style={{color:'#94a3b8',fontSize:12}}>Total</p>
+                  <p style={{fontSize:24,fontWeight:'bold',color:'#facc15'}}>{(network.referrals||[]).length}</p>
+                </div>
+              </div>
             </div>
-            <button onClick={loadTeam} style={{background:'#1e293b',padding:12,borderRadius:8,border:'none',color:'white',cursor:'pointer'}}>🔄 Refresh Team</button>
-            {team.map(r => (
+
+            {nextMilestone && (
+              <div style={{background:'#1e1b4b',padding:16,borderRadius:12,border:'1px solid #6366f1'}}>
+                <p style={{textAlign:'center',fontWeight:'bold',marginBottom:8,color:'#a5b4fc'}}>🎯 Next Milestone</p>
+                <p style={{textAlign:'center',fontSize:12,color:'#94a3b8'}}>L: {network.left_count||0}/{nextMilestone.left} | R: {network.right_count||0}/{nextMilestone.right}</p>
+                <p style={{textAlign:'center',fontSize:12,color:'#facc15',marginTop:4}}>Reward: {nextMilestone.trx.toLocaleString()} TRX {nextMilestone.ton>0?`+ ${nextMilestone.ton} TON`:''}</p>
+                <div style={{background:'#312e81',borderRadius:8,height:8,marginTop:8}}>
+                  <div style={{background:'#6366f1',borderRadius:8,height:8,width:`${Math.min(100,Math.min((network.left_count||0)/nextMilestone.left,(network.right_count||0)/nextMilestone.right)*100)}%`}}></div>
+                </div>
+              </div>
+            )}
+
+            {(network.rewards||[]).length > 0 && (
+              <div style={{background:'#0f172a',padding:12,borderRadius:12,border:'1px solid #1e293b'}}>
+                <p style={{fontWeight:'bold',marginBottom:8,color:'#facc15'}}>🏆 Rewards Earned</p>
+                {network.rewards.map((r,i) => (
+                  <p key={i} style={{fontSize:12,color:'#94a3b8'}}>Milestone {r.milestone}: {r.reward_trx.toLocaleString()} TRX {r.reward_ton>0?`+ ${r.reward_ton} TON`:''}</p>
+                ))}
+              </div>
+            )}
+
+            <button onClick={loadNetwork} style={{background:'#1e293b',padding:12,borderRadius:8,border:'none',color:'white',cursor:'pointer'}}>🔄 Refresh</button>
+            {(network.referrals||[]).map(r => (
               <div key={r.user_id} style={{background:'#0f172a',padding:12,borderRadius:8,border:'1px solid #1e293b',fontSize:12}}>
-                <div style={{fontWeight:'bold'}}>{r.first_name} {r.username ? `@${r.username}` : ''}</div>
+                <div style={{fontWeight:'bold'}}>{r.first_name} {r.username?`@${r.username}`:''}</div>
                 <div style={{color:'#facc15'}}>{Math.floor(r.balance).toLocaleString()} TRX</div>
               </div>
             ))}
-            {team.length === 0 && <p style={{color:'#64748b',textAlign:'center',fontSize:12}}>No referrals yet. Share your link!</p>}
           </div>
         )}
 
-        {activeTab === 'Profile' && (
+        {activeTab==='Profile' && (
           <div style={{display:'flex',flexDirection:'column',gap:16}}>
             <h2 style={{textAlign:'center',fontWeight:'bold'}}>🏆 ARTIFACTS</h2>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
               {SPECIAL_ARTIFACTS.map(art => {
-                const unlocked = art.items.every(id => (inv[String(id)] || 0) > 0);
+                const unlocked = art.items.every(id => (inv[String(id)]||0) > 0);
                 return (
                   <div key={art.id} style={{padding:12,borderRadius:12,border:`1px solid ${unlocked?'#6366f1':'#1e293b'}`,background:unlocked?'#1e1b4b':'#0f172a',opacity:unlocked?1:0.5}}>
                     <img src={art.img} style={{width:'100%',height:80,objectFit:'cover',borderRadius:8,marginBottom:8}} onError={e=>e.target.style.display='none'} />
@@ -231,25 +246,25 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'Wallet' && (
+        {activeTab==='Wallet' && (
           <div style={{background:'#0f172a',padding:16,borderRadius:16,border:'1px solid #1e293b',textAlign:'center',display:'flex',flexDirection:'column',gap:16}}>
             <h2 style={{color:'#60a5fa',fontWeight:'bold'}}>💎 TON Wallet</h2>
             <div style={{fontSize:20,fontWeight:'bold',color:'#60a5fa'}}>{(userData.ton_balance||0).toFixed(2)} TON</div>
+            <p style={{fontSize:11,color:'#94a3b8'}}>10,000,000 TRX = 1 TON</p>
             <div style={{display:'flex',justifyContent:'center',gap:8}}>
-              <button onClick={() => handleConvert('trx_to_ton')} style={{background:'#15803d',padding:'10px 16px',borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>TRX → TON</button>
-              <button onClick={() => handleConvert('ton_to_trx')} style={{background:'#b91c1c',padding:'10px 16px',borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>TON → TRX</button>
+              <button onClick={()=>handleConvert('trx_to_ton')} style={{background:'#15803d',padding:'10px 16px',borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>TRX → TON</button>
+              <button onClick={()=>handleConvert('ton_to_trx')} style={{background:'#b91c1c',padding:'10px 16px',borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>TON → TRX</button>
             </div>
-            <button onClick={() => window.open(`ton://transfer/UQCs20TzgI5bmr5TJo3PigiEn0DMJhWktPOw7bo27K2FVZwI`, '_blank')} style={{width:'100%',background:'#1d4ed8',padding:14,borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>💳 DEPOSIT TON</button>
-            <button onClick={handleWithdraw} style={{width:'100%',background:'#334155',padding:14,borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>💸 WITHDRAW (MIN 10 TON)</button>
+            <button onClick={()=>window.open('ton://transfer/UQCs20TzgI5bmr5TJo3PigiEn0DMJhWktPOw7bo27K2FVZwI','_blank')} style={{width:'100%',background:'#1d4ed8',padding:14,borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>💳 DEPOSIT TON</button>
+            <button onClick={handleWithdraw} style={{width:'100%',background:'#334155',padding:14,borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>💸 WITHDRAW (MIN 100 TON)</button>
           </div>
         )}
       </div>
 
       <nav style={{position:'fixed',bottom:0,width:'100%',background:'#020617',borderTop:'1px solid #1e293b',display:'flex',justifyContent:'space-around',padding:'12px 0'}}>
-        {[['Home','🏠'],['Network','🌐'],['Shop','🛒'],['Wallet','💎'],['Profile','🏆']].map(([tab,icon]) => (
-          <button key={tab} onClick={() => { setActiveTab(tab); if(tab==='Network') loadTeam(); }} style={{background:'none',border:'none',color: activeTab===tab ? '#22d3ee' : '#64748b',fontSize:22,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
-            {icon}
-            <span style={{fontSize:9,color: activeTab===tab ? '#22d3ee' : '#64748b'}}>{tab}</span>
+        {[['Home','🏠'],['Network','🌐'],['Shop','🛒'],['Wallet','💎'],['Profile','🏆']].map(([tab,icon])=>(
+          <button key={tab} onClick={()=>{setActiveTab(tab);if(tab==='Network')loadNetwork();}} style={{background:'none',border:'none',color:activeTab===tab?'#22d3ee':'#64748b',fontSize:22,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+            {icon}<span style={{fontSize:9,color:activeTab===tab?'#22d3ee':'#64748b'}}>{tab}</span>
           </button>
         ))}
       </nav>
