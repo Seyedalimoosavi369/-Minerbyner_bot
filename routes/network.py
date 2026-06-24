@@ -40,3 +40,27 @@ def api_leaderboard(tg):
     conn.close()
     return jsonify({"leaderboard": [{"user_id": r["user_id"], "first_name": r["first_name"],
                                       "username": r["username"], "balance": r["balance"]} for r in top]})
+
+@network_bp.route("/api/leaderboard/hashrate", methods=["GET"])
+@auth_required
+def leaderboard_hashrate(tg):
+    conn = get_db()
+    users = conn.execute("SELECT user_id, first_name, username FROM users").fetchall()
+    result = []
+    for u in users:
+        inv = get_inventory(conn, u["user_id"])
+        hashrate = sum(
+            item_boost * inv.get(str(item_id), 0)
+            for item_id, item_boost in [(1,5),(2,12),(3,25),(4,45),(5,80),(6,150),(7,300),(8,600),(9,1200),(10,2500),(11,5000),(12,10000)]
+        )
+        ref_count = conn.execute("SELECT COUNT(*) as c FROM users WHERE referrer_id=?", (u["user_id"],)).fetchone()["c"]
+        result.append({
+            "user_id": u["user_id"],
+            "first_name": u["first_name"],
+            "username": u["username"],
+            "hashrate": hashrate,
+            "referrals": ref_count
+        })
+    conn.close()
+    result.sort(key=lambda x: x["hashrate"], reverse=True)
+    return jsonify({"leaderboard": result[:50]})
