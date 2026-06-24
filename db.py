@@ -17,13 +17,25 @@ def init_db():
             username TEXT,
             first_name TEXT,
             balance REAL DEFAULT 1000000,
-            ton_balance REAL DEFAULT 5,
+            ton_balance REAL DEFAULT 0,
             referrer_id INTEGER DEFAULT NULL,
             left_child INTEGER DEFAULT NULL,
             right_child INTEGER DEFAULT NULL,
             left_count INTEGER DEFAULT 0,
             right_count INTEGER DEFAULT 0,
             balance_milestone INTEGER DEFAULT 0,
+            miner_hyper_active INTEGER DEFAULT 0,
+            miner_hyper_start REAL DEFAULT 0,
+            miner_hyper_expires REAL DEFAULT 0,
+            miner_nova_active INTEGER DEFAULT 0,
+            miner_nova_start REAL DEFAULT 0,
+            miner_nova_expires REAL DEFAULT 0,
+            miner_stellar_active INTEGER DEFAULT 0,
+            miner_stellar_start REAL DEFAULT 0,
+            miner_stellar_expires REAL DEFAULT 0,
+            miner_quantum_active INTEGER DEFAULT 0,
+            miner_quantum_start REAL DEFAULT 0,
+            miner_quantum_expires REAL DEFAULT 0,
             last_mine_time REAL DEFAULT 0,
             created_at REAL DEFAULT 0
         );
@@ -57,22 +69,28 @@ def init_db():
             created_at REAL
         );
     """)
-    # add new columns if not exist
-    try:
-        conn.execute("ALTER TABLE users ADD COLUMN left_child INTEGER DEFAULT NULL")
-    except: pass
-    try:
-        conn.execute("ALTER TABLE users ADD COLUMN right_child INTEGER DEFAULT NULL")
-    except: pass
-    try:
-        conn.execute("ALTER TABLE users ADD COLUMN left_count INTEGER DEFAULT 0")
-    except: pass
-    try:
-        conn.execute("ALTER TABLE users ADD COLUMN right_count INTEGER DEFAULT 0")
-    except: pass
-    try:
-        conn.execute("ALTER TABLE users ADD COLUMN balance_milestone INTEGER DEFAULT 0")
-    except: pass
+    new_cols = [
+        "left_child INTEGER DEFAULT NULL",
+        "right_child INTEGER DEFAULT NULL",
+        "left_count INTEGER DEFAULT 0",
+        "right_count INTEGER DEFAULT 0",
+        "balance_milestone INTEGER DEFAULT 0",
+        "miner_hyper_active INTEGER DEFAULT 0",
+        "miner_hyper_start REAL DEFAULT 0",
+        "miner_hyper_expires REAL DEFAULT 0",
+        "miner_nova_active INTEGER DEFAULT 0",
+        "miner_nova_start REAL DEFAULT 0",
+        "miner_nova_expires REAL DEFAULT 0",
+        "miner_stellar_active INTEGER DEFAULT 0",
+        "miner_stellar_start REAL DEFAULT 0",
+        "miner_stellar_expires REAL DEFAULT 0",
+        "miner_quantum_active INTEGER DEFAULT 0",
+        "miner_quantum_start REAL DEFAULT 0",
+        "miner_quantum_expires REAL DEFAULT 0",
+    ]
+    for col in new_cols:
+        try: conn.execute(f"ALTER TABLE users ADD COLUMN {col}")
+        except: pass
     conn.commit()
     conn.close()
 

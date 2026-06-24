@@ -7,28 +7,35 @@ from auth import auth_required
 user_bp = Blueprint('user', __name__)
 
 ITEMS = [
-    {"id": 1, "boost": 5},
-    {"id": 2, "boost": 12},
-    {"id": 3, "boost": 25},
-    {"id": 4, "boost": 45},
-    {"id": 5, "boost": 80},
-    {"id": 6, "boost": 150},
-    {"id": 7, "boost": 300},
-    {"id": 8, "boost": 600},
-    {"id": 9, "boost": 1200},
+    {"id": 1,  "boost": 5},
+    {"id": 2,  "boost": 12},
+    {"id": 3,  "boost": 25},
+    {"id": 4,  "boost": 45},
+    {"id": 5,  "boost": 80},
+    {"id": 6,  "boost": 150},
+    {"id": 7,  "boost": 300},
+    {"id": 8,  "boost": 600},
+    {"id": 9,  "boost": 1200},
     {"id": 10, "boost": 2500},
     {"id": 11, "boost": 5000},
     {"id": 12, "boost": 10000},
 ]
 
+MINERS = [
+    {"id": "hyper",   "daily": 100/180},
+    {"id": "nova",    "daily": 1000/180},
+    {"id": "stellar", "daily": 10000/180},
+    {"id": "quantum", "daily": 100000/180},
+]
+
 COMMISSION_LEVELS = [0.10, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001, 0.000000001, 0.0000000001]
 
 MILESTONES = [
-    (10, 10, 10_000_000, 0),
-    (50, 50, 20_000_000, 0),
-    (100, 100, 50_000_000, 0),
-    (1000, 1000, 70_000_000, 0),
-    (10000, 10000, 100_000_000, 1),
+    (10,   10,   10_000_000,  0),
+    (50,   50,   20_000_000,  0),
+    (100,  100,  50_000_000,  0),
+    (1000, 1000, 70_000_000,  0),
+    (10000,10000,100_000_000, 1),
 ]
 
 def calc_hashrate(inv):
@@ -39,11 +46,55 @@ def apply_mine(conn, uid):
     now = time.time()
     elapsed = min(now - user["last_mine_time"], 3600 * 8)
     inv = get_inventory(conn, uid)
-    earned = calc_hashrate(inv) * elapsed / 10
-    if earned > 0:
-        conn.execute("UPDATE users SET balance=balance+?, last_mine_time=? WHERE user_id=?", (earned, now, uid))
+    earned_trx = calc_hashrate(inv) * elapsed / 10
+    earned_ton = 0
+    for m in MINERS:
+        col_active = f"miner_{m['id']}_active"
+        col_expires = f"miner_{m['id']}_expires"
+        try:
+            if user[col_active] and now < user[col_expires]:
+                earned_ton += m["daily"] * elapsed / 86400
+        except: pass
+    if earned_trx > 0 or earned_ton > 0:
+        conn.execute(
+            "UPDATE users SET balance=balance+?, ton_balance=ton_balance+?, last_mine_time=? WHERE user_id=?",
+            (earned_trx, earned_ton, now, uid)
+        )
     else:
         conn.execute("UPDATE users SET last_mine_time=? WHERE user_id=?", (now, uid))
+
+def update_counts(conn, uid, side):
+    conn.execute(f"UPDATE users SET {side}_count={side}_count+1 WHERE user_id=?", (uid,))
+    conn.commit()
+    user = get_user(conn, uid)
+    check_milestone(conn, user)
+    parent = conn.execute(
+        "SELECT user_id, left_child, right_child FROM users WHERE left_child=? OR right_child=?",
+        (uid, uid)
+    ).fetchone()
+    if parent:
+        parent_side = "left" if parent["left_child"] == uid else "right"
+        update_counts(conn, parent["user_id"], parent_side)
+
+def check_milestone(conn, user):
+    uid = user["user_id"]
+    lc = user["left_count"] or 0
+    rc = user["right_count"] or 0
+    current = user["balance_milestone"] or 0
+    for i, (lr, rr, trx, ton) in enumerate(MILESTONES):
+        milestone_num = i + 1
+        if milestone_num <= current:
+            continue
+        if lc >= lr and rc >= rr:
+            conn.execute(
+                "UPDATE users SET balance=balance+?, ton_balance=ton_balance+?, balance_milestone=? WHERE user_id=?",
+                (trx, ton, milestone_num, uid)
+            )
+            conn.execute(
+                "INSERT INTO binary_rewards (user_id, milestone, reward_trx, reward_ton, created_at) VALUES (?,?,?,?,?)",
+                (uid, milestone_num, trx, ton, time.time())
+            )
+            conn.commit()
 
 def place_in_binary(conn, new_uid, referrer_id):
     if not referrer_id:
@@ -67,32 +118,6 @@ def place_in_binary(conn, new_uid, referrer_id):
     conn.execute(f"UPDATE users SET {side}_child=? WHERE user_id=?", (new_uid, referrer_id))
     update_counts(conn, referrer_id, side)
 
-def update_counts(conn, uid, side):
-    conn.execute(f"UPDATE users SET {side}_count={side}_count+1 WHERE user_id=?", (uid,))
-    conn.commit()
-    user = get_user(conn, uid)
-    check_milestone(conn, user)
-    parent = conn.execute("SELECT user_id, left_child, right_child FROM users WHERE left_child=? OR right_child=?", (uid, uid)).fetchone()
-    if parent:
-        parent_side = "left" if parent["left_child"] == uid else "right"
-        update_counts(conn, parent["user_id"], parent_side)
-
-def check_milestone(conn, user):
-    uid = user["user_id"]
-    lc = user["left_count"] or 0
-    rc = user["right_count"] or 0
-    current = user["balance_milestone"] or 0
-    for i, (lr, rr, trx, ton) in enumerate(MILESTONES):
-        milestone_num = i + 1
-        if milestone_num <= current:
-            continue
-        if lc >= lr and rc >= rr:
-            conn.execute("UPDATE users SET balance=balance+?, ton_balance=ton_balance+?, balance_milestone=? WHERE user_id=?",
-                         (trx, ton, milestone_num, uid))
-            conn.execute("INSERT INTO binary_rewards (user_id, milestone, reward_trx, reward_ton, created_at) VALUES (?,?,?,?,?)",
-                         (uid, milestone_num, trx, ton, time.time()))
-            conn.commit()
-
 def pay_commission(conn, buyer_id, amount):
     user = get_user(conn, buyer_id)
     ref_id = user["referrer_id"]
@@ -115,7 +140,7 @@ def api_user(tg):
     if not user:
         conn.execute(
             "INSERT INTO users (user_id, username, first_name, balance, ton_balance, last_mine_time, created_at) VALUES (?,?,?,?,?,?,?)",
-            (tg["id"], tg.get("username",""), tg.get("first_name",""), 1000000, 5, time.time(), time.time())
+            (tg["id"], tg.get("username",""), tg.get("first_name",""), 1000000, 0, time.time(), time.time())
         )
         conn.commit()
         if ref:
@@ -127,12 +152,23 @@ def api_user(tg):
                     pay_commission(conn, tg["id"], 1000000)
                     place_in_binary(conn, tg["id"], rid)
                     conn.commit()
-            except:
-                pass
+            except: pass
     apply_mine(conn, tg["id"])
     conn.commit()
     user = get_user(conn, tg["id"])
     inv = get_inventory(conn, tg["id"])
+    now = time.time()
+    miners_status = {}
+    for m in MINERS:
+        col_active = f"miner_{m['id']}_active"
+        col_expires = f"miner_{m['id']}_expires"
+        try:
+            active = bool(user[col_active] and now < user[col_expires])
+            expires = user[col_expires] if active else 0
+        except:
+            active = False
+            expires = 0
+        miners_status[m["id"]] = {"active": active, "expires": expires, "daily": round(m["daily"], 4)}
     conn.close()
     return jsonify({
         "user_id": user["user_id"],
@@ -141,6 +177,7 @@ def api_user(tg):
         "ton_balance": user["ton_balance"],
         "inventory": inv,
         "hashrate": calc_hashrate(inv),
+        "miners": miners_status,
     })
 
 @user_bp.route("/api/click", methods=["POST"])
