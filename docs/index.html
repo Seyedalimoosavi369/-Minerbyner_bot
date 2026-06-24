@@ -8,7 +8,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#020617;color:#f1f5f9;font-family:sans-serif;}</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#020617;color:#f1f5f9;font-family:sans-serif;}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 20px #a78bfa}50%{opacity:0.7;box-shadow:0 0 60px #a78bfa,0 0 100px #7c3aed}}
+@keyframes glow{0%,100%{box-shadow:0 0 10px #f59e0b,0 0 20px #f59e0b}50%{box-shadow:0 0 30px #f59e0b,0 0 60px #ef4444,0 0 90px #f59e0b}}
+.spin-ring{animation:spin 3s linear infinite;}
+.quantum-glow{animation:glow 2s ease-in-out infinite;}
+</style>
 </head>
 <body>
 <div id="root"></div>
@@ -17,146 +25,214 @@ const GITHUB_BASE = "https://raw.githubusercontent.com/Seyedalimoosavi369/-Miner
 const API = "https://web-production-aa8bad.up.railway.app";
 
 const ITEMS = [
-  { id:1, name:"Basic Core", price:10000, boost:5, img:`${GITHUB_BASE}/f.png` },
-  { id:2, name:"Quantum Rig", price:20000, boost:12, img:`${GITHUB_BASE}/g.png` },
-  { id:3, name:"Nebula Core", price:30000, boost:25, img:`${GITHUB_BASE}/skek.png` },
-  { id:4, name:"Nano Miner", price:40000, boost:45, img:`${GITHUB_BASE}/wkjw.png` },
-  { id:5, name:"Ion Reactor", price:50000, boost:80, img:`${GITHUB_BASE}/sksk.png` },
-  { id:6, name:"Dark Plasma", price:60000, boost:150, img:`${GITHUB_BASE}/sks.png` },
-  { id:7, name:"Void Engine", price:70000, boost:300, img:`${GITHUB_BASE}/skks.png` },
-  { id:8, name:"Gravity Drill", price:80000, boost:600, img:`${GITHUB_BASE}/sjjss.png` },
-  { id:9, name:"Star Forge", price:90000, boost:1200, img:`${GITHUB_BASE}/sjjeuwjj.png` },
-  { id:10, name:"Cyber Node", price:100000, boost:2500, img:`${GITHUB_BASE}/siieei.png` },
-  { id:11, name:"Nova Matrix", price:110000, boost:5000, img:`${GITHUB_BASE}/nzz.png` },
-  { id:12, name:"God Engine", price:120000, boost:10000, img:`${GITHUB_BASE}/jsjs.png` }
+  {id:1,  name:"Basic Core",    price:100000,    boost:5,     img:`${GITHUB_BASE}/f.png`},
+  {id:2,  name:"Quantum Rig",   price:200000,    boost:12,    img:`${GITHUB_BASE}/g.png`},
+  {id:3,  name:"Nebula Core",   price:400000,    boost:25,    img:`${GITHUB_BASE}/skek.png`},
+  {id:4,  name:"Nano Miner",    price:800000,    boost:45,    img:`${GITHUB_BASE}/wkjw.png`},
+  {id:5,  name:"Ion Reactor",   price:1600000,   boost:80,    img:`${GITHUB_BASE}/sksk.png`},
+  {id:6,  name:"Dark Plasma",   price:3200000,   boost:150,   img:`${GITHUB_BASE}/sks.png`},
+  {id:7,  name:"Void Engine",   price:6400000,   boost:300,   img:`${GITHUB_BASE}/skks.png`},
+  {id:8,  name:"Gravity Drill", price:12800000,  boost:600,   img:`${GITHUB_BASE}/sjjss.png`},
+  {id:9,  name:"Star Forge",    price:25600000,  boost:1200,  img:`${GITHUB_BASE}/sjjeuwjj.png`},
+  {id:10, name:"Cyber Node",    price:51200000,  boost:2500,  img:`${GITHUB_BASE}/siieei.png`},
+  {id:11, name:"Nova Matrix",   price:102400000, boost:5000,  img:`${GITHUB_BASE}/nzz.png`},
+  {id:12, name:"God Engine",    price:204800000, boost:10000, img:`${GITHUB_BASE}/jsjs.png`},
 ];
 
-const ARTIFACTS = [
-  { id:'Z', items:[1,2,3], img:`${GITHUB_BASE}/Gemini_Generated_Image_3w0elk3w0elk3w0e.png` },
-  { id:'E', items:[4,5,6], img:`${GITHUB_BASE}/Gemini_Generated_Image_eie1yceie1yceie1.png` },
-  { id:'U', items:[7,8,9], img:`${GITHUB_BASE}/Gemini_Generated_Image_i7etji7etji7etji.png` },
-  { id:'S', items:[10,11,12], img:`${GITHUB_BASE}/Gemini_Generated_Image_ow1889ow1889ow18.png` }
+const MINERS = [
+  {
+    id:"hyper",
+    name:"Hyper-Core Node",
+    price:100,
+    daily:100/180,
+    img:"https://raw.githubusercontent.com/Seyedalimoosavi369/-Minerbyner_bot/46296043e791541e51c30d2cabb3cebffcf72202/Hyper-Core%20Node.png",
+    color:"#a78bfa",
+    ringColor:"#7c3aed",
+    glow:false
+  },
+  {
+    id:"nova",
+    name:"Nova Reactor",
+    price:1000,
+    daily:1000/180,
+    img:"https://raw.githubusercontent.com/Seyedalimoosavi369/-Minerbyner_bot/4605ba3dd63994dd06ee008536fa226b31430134/Gemini_Generated_Image_30wx0s30wx0s30wx.png",
+    color:"#22d3ee",
+    ringColor:"#0891b2",
+    glow:false
+  },
+  {
+    id:"stellar",
+    name:"Stellar Forge",
+    price:10000,
+    daily:10000/180,
+    img:"https://raw.githubusercontent.com/Seyedalimoosavi369/-Minerbyner_bot/b697f3efb854969f1c820a52f08151ada8df9b5f/Gemini_Generated_Image_6kf8u26kf8u26kf8.png",
+    color:"#34d399",
+    ringColor:"#059669",
+    glow:false
+  },
+  {
+    id:"quantum",
+    name:"Quantum Singularity",
+    price:100000,
+    daily:100000/180,
+    img:"https://raw.githubusercontent.com/Seyedalimoosavi369/-Minerbyner_bot/b875bae811ce9e269a6b68a36b9f86d186fbd0ab/Gemini_Generated_Image_em8q7rem8q7rem8q.png",
+    color:"#f59e0b",
+    ringColor:"#d97706",
+    glow:true
+  },
 ];
 
-const MILESTONES = [
-  {left:10,right:10,trx:10000000,ton:0},
-  {left:50,right:50,trx:20000000,ton:0},
-  {left:100,right:100,trx:50000000,ton:0},
-  {left:1000,right:1000,trx:70000000,ton:0},
+const MILESTONES=[
+  {left:10,  right:10,  trx:10000000, ton:0},
+  {left:50,  right:50,  trx:20000000, ton:0},
+  {left:100, right:100, trx:50000000, ton:0},
+  {left:1000,right:1000,trx:70000000, ton:0},
   {left:10000,right:10000,trx:100000000,ton:1},
 ];
+const MEDALS=['🥇','🥈','🥉'];
 
-const MEDALS = ['🥇','🥈','🥉'];
+function MinerCard({miner, status, onBuy}) {
+  const active = status?.active;
+  const expires = status?.expires ? new Date(status.expires*1000).toLocaleDateString() : '';
+  const dailyTon = miner.daily.toFixed(3);
+
+  return (
+    <div style={{background:'#0f172a',borderRadius:16,padding:16,border:`1px solid ${active?miner.color:'#1e293b'}`,marginBottom:16}}>
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+        <div style={{position:'relative',width:80,height:80,flexShrink:0}}>
+          {active && (
+            <div className={miner.glow?"quantum-glow":""} style={{
+              position:'absolute',inset:-4,borderRadius:'50%',
+              border:`2px solid ${miner.ringColor}`,
+              ...(active && !miner.glow ? {animation:'spin 3s linear infinite'} : {})
+            }}/>
+          )}
+          <img src={miner.img} style={{width:80,height:80,borderRadius:'50%',objectFit:'cover',border:`2px solid ${active?miner.color:'#334155'}`}} onError={e=>e.target.style.display='none'}/>
+          {active && <div style={{position:'absolute',bottom:0,right:0,background:'#22c55e',borderRadius:'50%',width:18,height:18,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10}}>✓</div>}
+        </div>
+        <div style={{flex:1}}>
+          <p style={{fontWeight:'bold',color:miner.color,fontSize:14}}>{miner.name}</p>
+          <p style={{fontSize:11,color:'#94a3b8',marginTop:2}}>💎 {miner.price.toLocaleString()} TON</p>
+          <p style={{fontSize:11,color:'#60a5fa',marginTop:2}}>+{dailyTon} TON/day</p>
+          <p style={{fontSize:10,color:'#64748b'}}>6 months • ROI guaranteed</p>
+        </div>
+      </div>
+      {active ? (
+        <div style={{background:'#14532d',padding:8,borderRadius:8,textAlign:'center'}}>
+          <p style={{color:'#86efac',fontSize:12}}>✅ ACTIVE until {expires}</p>
+        </div>
+      ) : (
+        <button onClick={()=>onBuy(miner)} style={{width:'100%',background:miner.ringColor,padding:10,borderRadius:8,border:'none',color:'white',fontWeight:'bold',cursor:'pointer',fontSize:12}}>
+          🚀 Activate ({miner.price.toLocaleString()} TON)
+        </button>
+      )}
+    </div>
+  );
+}
 
 function App() {
-  const [tab, setTab] = React.useState('Home');
-  const [user, setUser] = React.useState({balance:0,ton_balance:0,inventory:{},hashrate:0});
-  const [loading, setLoading] = React.useState(true);
-  const [net, setNet] = React.useState({referrals:[],left_count:0,right_count:0,balance_milestone:0,rewards:[]});
-  const [lb, setLb] = React.useState([]);
-  const [error, setError] = React.useState('');
+  const [tab,setTab]=React.useState('Home');
+  const [user,setUser]=React.useState({balance:0,ton_balance:0,inventory:{},hashrate:0,miners:{}});
+  const [loading,setLoading]=React.useState(true);
+  const [net,setNet]=React.useState({referrals:[],left_count:0,right_count:0,balance_milestone:0,rewards:[]});
+  const [lb,setLb]=React.useState([]);
+  const [error,setError]=React.useState('');
 
-  const tg = window.Telegram?.WebApp;
-  const initData = tg?.initData || "";
-  const ref = new URLSearchParams(window.location.search).get('ref') || "";
+  const tg=window.Telegram?.WebApp;
+  const initData=tg?.initData||"";
+  const ref=new URLSearchParams(window.location.search).get('ref')||"";
 
-  const api = async (path, method='GET', body=null) => {
-    try {
-      const r = await fetch(`${API}${path}`, {
-        method,
-        headers:{'Content-Type':'application/json','X-Init-Data':initData},
-        body: body ? JSON.stringify(body) : null
-      });
+  const api=async(path,method='GET',body=null)=>{
+    try{
+      const r=await fetch(`${API}${path}`,{method,headers:{'Content-Type':'application/json','X-Init-Data':initData},body:body?JSON.stringify(body):null});
       return r.json();
-    } catch(e) { return {error:e.message}; }
+    }catch(e){return{error:e.message};}
   };
 
-  React.useEffect(() => {
-    tg?.ready(); tg?.expand();
-    api('/api/user','POST',{ref}).then(d => {
-      if(d.error) setError(d.error);
+  React.useEffect(()=>{
+    tg?.ready();tg?.expand();
+    api('/api/user','POST',{ref}).then(d=>{
+      if(d.error)setError(d.error);
       else setUser(d);
       setLoading(false);
     });
-    api('/api/leaderboard/hashrate').then(d => {
-      if(!d.error) setLb(d.leaderboard||[]);
-    });
-  }, []);
+    api('/api/leaderboard/hashrate').then(d=>{if(!d.error)setLb(d.leaderboard||[]);});
+  },[]);
 
-  React.useEffect(() => {
-    const t = setInterval(() => {
-      setUser(p => p.hashrate>0 ? {...p,balance:p.balance+p.hashrate/10} : p);
-    }, 1000);
-    return () => clearInterval(t);
-  }, []);
+  React.useEffect(()=>{
+    const t=setInterval(()=>{
+      setUser(p=>{
+        let newTon = p.ton_balance;
+        const miners = p.miners || {};
+        Object.entries(miners).forEach(([id,s])=>{
+          if(s.active){
+            const m = MINERS.find(x=>x.id===id);
+            if(m) newTon += m.daily/86400;
+          }
+        });
+        return {...p, balance:p.hashrate>0?p.balance+p.hashrate/10:p.balance, ton_balance:newTon};
+      });
+    },1000);
+    return()=>clearInterval(t);
+  },[]);
 
-  const click = async () => {
-    const d = await api('/api/click','POST');
-    if(!d.error) setUser(p=>({...p,balance:d.balance}));
-  };
+  const click=async()=>{const d=await api('/api/click','POST');if(!d.error)setUser(p=>({...p,balance:d.balance}));};
 
-  const buy = async (item) => {
-    const d = await api('/api/buy','POST',{item_id:item.id});
-    if(d.error) alert(d.error);
+  const buy=async(item)=>{
+    const d=await api('/api/buy','POST',{item_id:item.id});
+    if(d.error)alert(d.error);
     else setUser(p=>({...p,balance:d.balance,ton_balance:d.ton_balance,inventory:d.inventory,hashrate:d.hashrate}));
   };
 
-  const convert = async (dir) => {
-    const d = await api('/api/convert','POST',{direction:dir});
-    if(d.error) alert(d.error);
-    else setUser(p=>({...p,balance:d.balance,ton_balance:d.ton_balance}));
+  const buyMiner=async(miner)=>{
+    if(!confirm(`Activate ${miner.name}?\n\n💎 Cost: ${miner.price.toLocaleString()} TON\n📈 Daily: ${miner.daily.toFixed(3)} TON\n⏱ Duration: 6 months\n\nYour investment returns in 6 months!`))return;
+    const d=await api('/api/buy_miner','POST',{miner_id:miner.id});
+    if(d.error){alert(d.error);return;}
+    setUser(p=>({...p,ton_balance:d.ton_balance,miners:{...p.miners,[miner.id]:{active:true,expires:d.expires,daily:d.daily_ton}}}));
+    alert(`✅ ${miner.name} activated!`);
   };
 
-  const withdraw = async () => {
-    const wallet = prompt("Enter TON wallet address:");
-    if(!wallet) return;
-    const amount = parseFloat(prompt("Amount (min 100 TON):"));
+  const withdraw=async()=>{
+    const hasActive = Object.values(user.miners||{}).some(m=>m.active);
+    if(!hasActive){alert("You need an active miner to withdraw!");return;}
+    const wallet=prompt("Enter TON wallet address:");
+    if(!wallet)return;
+    const amount=parseFloat(prompt("Amount (min 100 TON):"));
     if(!amount||amount<100){alert("Minimum 100 TON");return;}
-    const d = await api('/api/withdraw','POST',{amount,wallet});
-    if(d.error) alert(d.error);
-    else alert("Withdrawal request sent!");
+    const d=await api('/api/withdraw','POST',{amount,wallet});
+    if(d.error)alert(d.error);
+    else alert("✅ Withdrawal request sent!");
   };
 
-  const loadNet = async () => {
-    const d = await api('/api/team');
-    if(!d.error) setNet(d);
-  };
+  const loadNet=async()=>{const d=await api('/api/team');if(!d.error)setNet(d);};
+  const loadLb=async()=>{const d=await api('/api/leaderboard/hashrate');if(!d.error)setLb(d.leaderboard||[]);};
+  const refLink=()=>`https://t.me/Minerbyner_bot?start=${tg?.initDataUnsafe?.user?.id||''}`;
+  const copyLink=()=>{const l=refLink();if(navigator.clipboard)navigator.clipboard.writeText(l);alert("Copied!\n"+l);};
 
-  const loadLb = async () => {
-    const d = await api('/api/leaderboard/hashrate');
-    if(!d.error) setLb(d.leaderboard||[]);
-  };
+  if(loading)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',fontSize:24,color:'#22d3ee'}}>Loading...</div>;
+  if(error)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:16,padding:24,textAlign:'center'}}><div style={{fontSize:40}}>⚠️</div><div style={{color:'#ef4444'}}>{error}</div></div>;
 
-  const refLink = () => `https://t.me/Minerbyner_bot?start=${tg?.initDataUnsafe?.user?.id||''}`;
+  const inv=user.inventory||{};
+  const miners=user.miners||{};
+  const top3=lb.slice(0,3);
+  const nextMs=MILESTONES[net.balance_milestone]||null;
+  const activeMinerCount=Object.values(miners).filter(m=>m.active).length;
 
-  const copyLink = () => {
-    const l = refLink();
-    if(navigator.clipboard) navigator.clipboard.writeText(l);
-    alert("Copied!\n"+l);
-  };
-
-  if(loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',fontSize:24,color:'#22d3ee'}}>Loading...</div>;
-  if(error) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',flexDirection:'column',gap:16,padding:24,textAlign:'center'}}><div style={{fontSize:40}}>⚠️</div><div style={{color:'#ef4444'}}>{error}</div></div>;
-
-  const inv = user.inventory||{};
-  const top3 = lb.slice(0,3);
-  const nextMs = MILESTONES[net.balance_milestone]||null;
-
-  return (
+  return(
     <div style={{background:'#020617',color:'#f1f5f9',minHeight:'100vh',paddingBottom:80}}>
       <div style={{padding:'14px 16px',borderBottom:'1px solid #1e293b',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <span style={{fontWeight:'bold',color:'#22d3ee',fontSize:18}}>⚡ MINER PRO</span>
         <div style={{textAlign:'right',fontSize:12}}>
           <div style={{color:'#facc15',fontWeight:'bold'}}>{Math.floor(user.balance).toLocaleString()} TRX</div>
-          <div style={{color:'#60a5fa',fontWeight:'bold'}}>{(user.ton_balance||0).toFixed(2)} TON</div>
+          <div style={{color:'#60a5fa',fontWeight:'bold'}}>{(user.ton_balance||0).toFixed(3)} TON</div>
         </div>
       </div>
 
       <div style={{padding:16}}>
 
-        {tab==='Home' && (
+        {tab==='Home'&&(
           <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:16}}>
-            {top3.length>0 && (
+            {top3.length>0&&(
               <div style={{width:'100%',background:'#0f172a',borderRadius:12,padding:12,border:'1px solid #facc1544'}}>
                 <p style={{textAlign:'center',fontSize:11,color:'#facc15',marginBottom:10,fontWeight:'bold'}}>🏆 Top Miners</p>
                 <div style={{display:'flex',justifyContent:'space-around'}}>
@@ -171,21 +247,28 @@ function App() {
                 </div>
               </div>
             )}
+            {activeMinerCount>0&&(
+              <div style={{width:'100%',background:'#0f172a',borderRadius:12,padding:12,border:'1px solid #a78bfa44',textAlign:'center'}}>
+                <p style={{fontSize:11,color:'#a78bfa',fontWeight:'bold'}}>💎 Active Miners: {activeMinerCount}</p>
+                <p style={{fontSize:10,color:'#94a3b8',marginTop:4}}>
+                  +{Object.entries(miners).filter(([_,s])=>s.active).map(([id,s])=>{const m=MINERS.find(x=>x.id===id);return m?m.daily:0;}).reduce((a,b)=>a+b,0).toFixed(3)} TON/day
+                </p>
+              </div>
+            )}
             <button onClick={click} style={{width:160,height:160,borderRadius:'50%',border:'4px solid #22d3ee',background:'#0f172a',cursor:'pointer',fontSize:60,boxShadow:'0 0 30px #22d3ee55'}}>⚡</button>
             <p style={{color:'#94a3b8'}}>Hashrate: <span style={{color:'#22d3ee',fontWeight:'bold'}}>{user.hashrate||0}</span>/s</p>
-            <p style={{color:'#64748b',fontSize:12}}>Tap to mine TRX!</p>
           </div>
         )}
 
-        {tab==='Shop' && (
+        {tab==='Shop'&&(
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             {ITEMS.map(item=>{
               const level=inv[String(item.id)]||0;
               const isTon=level>=10;
               const cost=isTon?Math.pow(2,level-10):item.price*Math.pow(2,level);
-              return (
+              return(
                 <div key={item.id} style={{background:'#0f172a',padding:12,borderRadius:12,display:'flex',alignItems:'center',gap:12,border:'1px solid #1e293b'}}>
-                  <img src={item.img} style={{width:48,height:48,borderRadius:8,objectFit:'cover'}} onError={e=>e.target.style.display='none'} />
+                  <img src={item.img} style={{width:48,height:48,borderRadius:8,objectFit:'cover'}} onError={e=>e.target.style.display='none'}/>
                   <div style={{flex:1,fontSize:12}}>
                     <div style={{fontWeight:'bold'}}>{item.name}</div>
                     <div style={{color:'#94a3b8'}}>Lv {level} | +{item.boost*level}/s</div>
@@ -198,7 +281,7 @@ function App() {
           </div>
         )}
 
-        {tab==='Network' && (
+        {tab==='Network'&&(
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <div style={{background:'#0f172a',padding:16,borderRadius:12,border:'1px solid #1e293b',textAlign:'center'}}>
               <p style={{color:'#94a3b8',fontSize:12,marginBottom:8}}>Your referral link:</p>
@@ -213,7 +296,7 @@ function App() {
                 <div style={{textAlign:'center'}}><p style={{color:'#94a3b8',fontSize:12}}>Total</p><p style={{fontSize:24,fontWeight:'bold',color:'#facc15'}}>{(net.referrals||[]).length}</p></div>
               </div>
             </div>
-            {nextMs && (
+            {nextMs&&(
               <div style={{background:'#1e1b4b',padding:16,borderRadius:12,border:'1px solid #6366f1'}}>
                 <p style={{textAlign:'center',fontWeight:'bold',marginBottom:8,color:'#a5b4fc'}}>🎯 Next Milestone</p>
                 <p style={{textAlign:'center',fontSize:12,color:'#94a3b8'}}>L: {net.left_count||0}/{nextMs.left} | R: {net.right_count||0}/{nextMs.right}</p>
@@ -223,12 +306,10 @@ function App() {
                 </div>
               </div>
             )}
-            {(net.rewards||[]).length>0 && (
+            {(net.rewards||[]).length>0&&(
               <div style={{background:'#0f172a',padding:12,borderRadius:12,border:'1px solid #1e293b'}}>
                 <p style={{fontWeight:'bold',marginBottom:8,color:'#facc15'}}>🏆 Rewards Earned</p>
-                {net.rewards.map((r,i)=>(
-                  <p key={i} style={{fontSize:12,color:'#94a3b8'}}>Milestone {r.milestone}: {r.reward_trx.toLocaleString()} TRX {r.reward_ton>0?`+ ${r.reward_ton} TON`:''}</p>
-                ))}
+                {net.rewards.map((r,i)=><p key={i} style={{fontSize:12,color:'#94a3b8'}}>Milestone {r.milestone}: {r.reward_trx.toLocaleString()} TRX {r.reward_ton>0?`+ ${r.reward_ton} TON`:''}</p>)}
               </div>
             )}
             <button onClick={loadNet} style={{background:'#1e293b',padding:12,borderRadius:8,border:'none',color:'white',cursor:'pointer'}}>🔄 Refresh</button>
@@ -241,7 +322,7 @@ function App() {
           </div>
         )}
 
-        {tab==='Leaderboard' && (
+        {tab==='Leaderboard'&&(
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <button onClick={loadLb} style={{background:'#1e293b',padding:12,borderRadius:8,border:'none',color:'white',cursor:'pointer'}}>🔄 Refresh</button>
             {lb.map((u,i)=>(
@@ -254,45 +335,40 @@ function App() {
                 </div>
               </div>
             ))}
-            {lb.length===0 && <p style={{textAlign:'center',color:'#64748b'}}>No data yet</p>}
+            {lb.length===0&&<p style={{textAlign:'center',color:'#64748b'}}>No data yet</p>}
           </div>
         )}
 
-        {tab==='Profile' && (
-          <div style={{display:'flex',flexDirection:'column',gap:16}}>
-            <h2 style={{textAlign:'center',fontWeight:'bold'}}>🏆 ARTIFACTS</h2>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-              {ARTIFACTS.map(art=>{
-                const unlocked=art.items.every(id=>(inv[String(id)]||0)>0);
-                return (
-                  <div key={art.id} style={{padding:12,borderRadius:12,border:`1px solid ${unlocked?'#6366f1':'#1e293b'}`,background:unlocked?'#1e1b4b':'#0f172a',opacity:unlocked?1:0.5}}>
-                    <img src={art.img} style={{width:'100%',height:80,objectFit:'cover',borderRadius:8,marginBottom:8}} onError={e=>e.target.style.display='none'} />
-                    <p style={{textAlign:'center',fontSize:10,fontWeight:'bold',color:unlocked?'#a5b4fc':'#64748b'}}>{unlocked?'✅ ACTIVE':'🔒 LOCKED'}</p>
-                  </div>
-                );
-              })}
-            </div>
+        {tab==='Profile'&&(
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <h2 style={{textAlign:'center',fontWeight:'bold',marginBottom:4}}>💎 Investment Miners</h2>
+            <p style={{textAlign:'center',fontSize:11,color:'#94a3b8',marginBottom:8}}>Activate miners to earn TON daily & enable withdrawal</p>
+            {MINERS.map(miner=>(
+              <MinerCard key={miner.id} miner={miner} status={miners[miner.id]} onBuy={buyMiner}/>
+            ))}
           </div>
         )}
 
-        {tab==='Wallet' && (
+        {tab==='Wallet'&&(
           <div style={{background:'#0f172a',padding:16,borderRadius:16,border:'1px solid #1e293b',textAlign:'center',display:'flex',flexDirection:'column',gap:16}}>
             <h2 style={{color:'#60a5fa',fontWeight:'bold'}}>💎 TON Wallet</h2>
-            <div style={{fontSize:20,fontWeight:'bold',color:'#60a5fa'}}>{(user.ton_balance||0).toFixed(2)} TON</div>
-            <p style={{fontSize:11,color:'#94a3b8'}}>10,000,000 TRX = 1 TON</p>
-            <div style={{display:'flex',justifyContent:'center',gap:8}}>
-              <button onClick={()=>convert('trx_to_ton')} style={{background:'#15803d',padding:'10px 16px',borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>TRX → TON</button>
-              <button onClick={()=>convert('ton_to_trx')} style={{background:'#b91c1c',padding:'10px 16px',borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>TON → TRX</button>
-            </div>
+            <div style={{fontSize:20,fontWeight:'bold',color:'#60a5fa'}}>{(user.ton_balance||0).toFixed(3)} TON</div>
             <button onClick={()=>window.open('ton://transfer/UQCs20TzgI5bmr5TJo3PigiEn0DMJhWktPOw7bo27K2FVZwI','_blank')} style={{width:'100%',background:'#1d4ed8',padding:14,borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>💳 DEPOSIT TON</button>
-            <button onClick={withdraw} style={{width:'100%',background:'#334155',padding:14,borderRadius:8,border:'none',color:'white',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>💸 WITHDRAW (MIN 100 TON)</button>
+            <div style={{background:'#1e293b',padding:12,borderRadius:8,fontSize:11,color:'#94a3b8',textAlign:'left'}}>
+              <p style={{marginBottom:4}}>⚠️ Withdrawal requires:</p>
+              <p>• At least one active Investment Miner</p>
+              <p>• Minimum 100 TON balance</p>
+            </div>
+            <button onClick={withdraw} style={{width:'100%',background:activeMinerCount>0?'#334155':'#1e293b',padding:14,borderRadius:8,border:'none',color:activeMinerCount>0?'white':'#64748b',fontSize:12,fontWeight:'bold',cursor:'pointer'}}>
+              💸 WITHDRAW {activeMinerCount===0?'(Need Active Miner)':'(MIN 100 TON)'}
+            </button>
           </div>
         )}
 
       </div>
 
       <nav style={{position:'fixed',bottom:0,width:'100%',background:'#020617',borderTop:'1px solid #1e293b',display:'flex',justifyContent:'space-around',padding:'8px 0'}}>
-        {[['Home','🏠'],['Network','🌐'],['Shop','🛒'],['Leaderboard','🏆'],['Profile','👤'],['Wallet','💎']].map(([t,icon])=>(
+        {[['Home','🏠'],['Network','🌐'],['Shop','🛒'],['Leaderboard','🏆'],['Profile','💎'],['Wallet','👛']].map(([t,icon])=>(
           <button key={t} onClick={()=>{setTab(t);if(t==='Network')loadNet();if(t==='Leaderboard')loadLb();}} style={{background:'none',border:'none',color:tab===t?'#22d3ee':'#64748b',fontSize:18,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:1}}>
             {icon}<span style={{fontSize:8,color:tab===t?'#22d3ee':'#64748b'}}>{t}</span>
           </button>
@@ -302,7 +378,7 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
