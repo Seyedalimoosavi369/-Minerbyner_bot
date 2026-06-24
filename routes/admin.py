@@ -64,3 +64,25 @@ def admin_stats():
     pending = conn.execute("SELECT COUNT(*) as c FROM withdrawals WHERE status='pending'").fetchone()["c"]
     conn.close()
     return jsonify({"total_users": users, "pending_withdrawals": pending})
+
+@admin_bp.route("/api/admin/migrate", methods=["POST"])
+def migrate():
+    conn = get_db()
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN left_child INTEGER DEFAULT NULL")
+    except: pass
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN right_child INTEGER DEFAULT NULL")
+    except: pass
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN left_count INTEGER DEFAULT 0")
+    except: pass
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN right_count INTEGER DEFAULT 0")
+    except: pass
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN balance_milestone INTEGER DEFAULT 0")
+    except: pass
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "message": "Migration done"})
