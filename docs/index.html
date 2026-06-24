@@ -39,18 +39,21 @@ const SPECIAL_ARTIFACTS = [
 ];
 
 const MILESTONES = [
-  {left:10, right:10, trx:10000000, ton:0},
-  {left:50, right:50, trx:20000000, ton:0},
-  {left:100, right:100, trx:50000000, ton:0},
-  {left:1000, right:1000, trx:70000000, ton:0},
-  {left:10000, right:10000, trx:100000000, ton:1},
+  {left:10,right:10,trx:10000000,ton:0},
+  {left:50,right:50,trx:20000000,ton:0},
+  {left:100,right:100,trx:50000000,ton:0},
+  {left:1000,right:1000,trx:70000000,ton:0},
+  {left:10000,right:10000,trx:100000000,ton:1},
 ];
+
+const MEDALS = ['🥇','🥈','🥉'];
 
 function App() {
   const [activeTab, setActiveTab] = React.useState('Home');
   const [userData, setUserData] = React.useState({balance:0,ton_balance:0,inventory:{},hashrate:0});
   const [loading, setLoading] = React.useState(true);
   const [network, setNetwork] = React.useState({referrals:[],left_count:0,right_count:0,balance_milestone:0,rewards:[]});
+  const [leaderboard, setLeaderboard] = React.useState([]);
   const [error, setError] = React.useState('');
 
   const tg = window.Telegram?.WebApp;
@@ -74,6 +77,9 @@ function App() {
       if(data.error) setError(data.error);
       else setUserData(data);
       setLoading(false);
+    });
+    apiCall('/api/leaderboard/hashrate').then(data => {
+      if(!data.error) setLeaderboard(data.leaderboard || []);
     });
   }, []);
 
@@ -116,6 +122,11 @@ function App() {
     if(!data.error) setNetwork(data);
   };
 
+  const loadLeaderboard = async () => {
+    const data = await apiCall('/api/leaderboard/hashrate');
+    if(!data.error) setLeaderboard(data.leaderboard || []);
+  };
+
   const getReferralLink = () => {
     const uid = tg?.initDataUnsafe?.user?.id || '';
     return `https://t.me/Minerbyner_bot?start=${uid}`;
@@ -132,6 +143,7 @@ function App() {
 
   const inv = userData.inventory || {};
   const nextMilestone = MILESTONES[network.balance_milestone] || null;
+  const top3 = leaderboard.slice(0,3);
 
   return (
     <div style={{background:'#020617',color:'#f1f5f9',minHeight:'100vh',paddingBottom:80}}>
@@ -145,7 +157,22 @@ function App() {
 
       <div style={{padding:16}}>
         {activeTab==='Home' && (
-          <div style={{display:'flex',flexDirection:'column',alignItems:'center',paddingTop:40,gap:16}}>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:16}}>
+            {top3.length > 0 && (
+              <div style={{width:'100%',background:'#0f172a',borderRadius:12,padding:12,border:'1px solid #1e293b'}}>
+                <p style={{textAlign:'center',fontSize:11,color:'#94a3b8',marginBottom:8}}>🏆 Top Miners</p>
+                <div style={{display:'flex',justifyContent:'space-around'}}>
+                  {top3.map((u,i) => (
+                    <div key={u.user_id} style={{textAlign:'center'}}>
+                      <div style={{fontSize:20}}>{MEDALS[i]}</div>
+                      <div style={{fontSize:10,color:'white',fontWeight:'bold'}}>{u.first_name?.slice(0,8)}</div>
+                      <div style={{fontSize:9,color:'#22d3ee'}}>{u.hashrate}/s</div>
+                      <div style={{fontSize:9,color:'#94a3b8'}}>{u.referrals} refs</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <button onClick={handleClick} style={{width:160,height:160,borderRadius:'50%',border:'4px solid #22d3ee',background:'#0f172a',cursor:'pointer',fontSize:60,boxShadow:'0 0 30px #22d3ee55'}}>⚡</button>
             <p style={{color:'#94a3b8'}}>Hashrate: <span style={{color:'#22d3ee',fontWeight:'bold'}}>{userData.hashrate||0}</span>/s</p>
             <p style={{color:'#64748b',fontSize:12}}>Tap to mine TRX!</p>
@@ -180,7 +207,6 @@ function App() {
               <p style={{color:'#22d3ee',fontSize:11,wordBreak:'break-all',marginBottom:12}}>{getReferralLink()}</p>
               <button onClick={copyLink} style={{background:'#0e7490',padding:'8px 24px',borderRadius:8,border:'none',color:'white',fontWeight:'bold',cursor:'pointer'}}>📋 Copy Link</button>
             </div>
-
             <div style={{background:'#0f172a',padding:16,borderRadius:12,border:'1px solid #1e293b'}}>
               <p style={{textAlign:'center',fontWeight:'bold',marginBottom:12,color:'#22d3ee'}}>🌲 Binary Network</p>
               <div style={{display:'flex',justifyContent:'space-around'}}>
@@ -198,7 +224,6 @@ function App() {
                 </div>
               </div>
             </div>
-
             {nextMilestone && (
               <div style={{background:'#1e1b4b',padding:16,borderRadius:12,border:'1px solid #6366f1'}}>
                 <p style={{textAlign:'center',fontWeight:'bold',marginBottom:8,color:'#a5b4fc'}}>🎯 Next Milestone</p>
@@ -209,21 +234,27 @@ function App() {
                 </div>
               </div>
             )}
-
-            {(network.rewards||[]).length > 0 && (
-              <div style={{background:'#0f172a',padding:12,borderRadius:12,border:'1px solid #1e293b'}}>
-                <p style={{fontWeight:'bold',marginBottom:8,color:'#facc15'}}>🏆 Rewards Earned</p>
-                {network.rewards.map((r,i) => (
-                  <p key={i} style={{fontSize:12,color:'#94a3b8'}}>Milestone {r.milestone}: {r.reward_trx.toLocaleString()} TRX {r.reward_ton>0?`+ ${r.reward_ton} TON`:''}</p>
-                ))}
-              </div>
-            )}
-
             <button onClick={loadNetwork} style={{background:'#1e293b',padding:12,borderRadius:8,border:'none',color:'white',cursor:'pointer'}}>🔄 Refresh</button>
             {(network.referrals||[]).map(r => (
               <div key={r.user_id} style={{background:'#0f172a',padding:12,borderRadius:8,border:'1px solid #1e293b',fontSize:12}}>
                 <div style={{fontWeight:'bold'}}>{r.first_name} {r.username?`@${r.username}`:''}</div>
                 <div style={{color:'#facc15'}}>{Math.floor(r.balance).toLocaleString()} TRX</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab==='Leaderboard' && (
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <button onClick={loadLeaderboard} style={{background:'#1e293b',padding:12,borderRadius:8,border:'none',color:'white',cursor:'pointer'}}>🔄 Refresh</button>
+            {leaderboard.map((u,i) => (
+              <div key={u.user_id} style={{background:'#0f172a',padding:12,borderRadius:12,border:`1px solid ${i<3?'#facc15':'#1e293b'}`,display:'flex',alignItems:'center',gap:12}}>
+                <div style={{fontSize:24,width:32,textAlign:'center'}}>{i<3?MEDALS[i]:`${i+1}`}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:'bold',fontSize:13}}>{u.first_name} {u.username?`@${u.username}`:''}</div>
+                  <div style={{fontSize:11,color:'#22d3ee'}}>⚡ {u.hashrate}/s</div>
+                  <div style={{fontSize:11,color:'#94a3b8'}}>👥 {u.referrals} referrals</div>
+                </div>
               </div>
             ))}
           </div>
@@ -261,10 +292,10 @@ function App() {
         )}
       </div>
 
-      <nav style={{position:'fixed',bottom:0,width:'100%',background:'#020617',borderTop:'1px solid #1e293b',display:'flex',justifyContent:'space-around',padding:'12px 0'}}>
-        {[['Home','🏠'],['Network','🌐'],['Shop','🛒'],['Wallet','💎'],['Profile','🏆']].map(([tab,icon])=>(
-          <button key={tab} onClick={()=>{setActiveTab(tab);if(tab==='Network')loadNetwork();}} style={{background:'none',border:'none',color:activeTab===tab?'#22d3ee':'#64748b',fontSize:22,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
-            {icon}<span style={{fontSize:9,color:activeTab===tab?'#22d3ee':'#64748b'}}>{tab}</span>
+      <nav style={{position:'fixed',bottom:0,width:'100%',background:'#020617',borderTop:'1px solid #1e293b',display:'flex',justifyContent:'space-around',padding:'8px 0'}}>
+        {[['Home','🏠'],['Network','🌐'],['Shop','🛒'],['Leaderboard','🏆'],['Wallet','💎']].map(([tab,icon])=>(
+          <button key={tab} onClick={()=>{setActiveTab(tab);if(tab==='Network')loadNetwork();if(tab==='Leaderboard')loadLeaderboard();}} style={{background:'none',border:'none',color:activeTab===tab?'#22d3ee':'#64748b',fontSize:20,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:1}}>
+            {icon}<span style={{fontSize:8,color:activeTab===tab?'#22d3ee':'#64748b'}}>{tab}</span>
           </button>
         ))}
       </nav>
