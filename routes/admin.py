@@ -152,3 +152,28 @@ def migrate():
     conn.commit()
     conn.close()
     return jsonify({"success": True})
+
+@admin_bp.route("/api/admin/broadcast", methods=["POST"])
+def broadcast():
+    data = request.json or {}
+    if int(data.get("admin_id", 0)) != ADMIN_ID:
+        return jsonify({"error": "Forbidden"}), 403
+    msg = data.get("message", "")
+    if not msg:
+        return jsonify({"error": "message required"}), 400
+    conn = get_db()
+    users = conn.execute("SELECT user_id FROM users").fetchall()
+    conn.close()
+    sent = 0
+    failed = 0
+    for u in users:
+        try:
+            r = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                             json={"chat_id": u["user_id"], "text": msg, "parse_mode": "HTML"})
+            if r.json().get("ok"):
+                sent += 1
+            else:
+                failed += 1
+        except:
+            failed += 1
+    return jsonify({"success": True, "sent": sent, "failed": failed})

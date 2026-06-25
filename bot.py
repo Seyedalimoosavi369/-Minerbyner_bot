@@ -217,4 +217,19 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("stats", stats))
     app.add_handler(CommandHandler("users", users))
     app.add_handler(CallbackQueryHandler(button))
+    app.add_handler(CommandHandler("broadcast", broadcast))
     app.run_polling(close_loop=False)
+
+async def broadcast(update, context):
+    user = update.effective_user
+    if user.id != ADMIN_ID:
+        await update.message.reply_text("⛔ Access Denied")
+        return
+    if not context.args:
+        await update.message.reply_text("Usage: /broadcast [message]")
+        return
+    msg = " ".join(context.args)
+    r = requests.post(f"{API}/api/admin/broadcast",
+                     json={"admin_id": ADMIN_ID, "message": msg})
+    data = r.json()
+    await update.message.reply_text(f"✅ Sent: {data.get('sent')} | Failed: {data.get('failed')}")
