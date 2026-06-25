@@ -1,5 +1,7 @@
 import math
 import time
+import os
+import requests as req
 from flask import Blueprint, request, jsonify
 from db import get_db, get_user, get_inventory
 from auth import auth_required
@@ -23,10 +25,10 @@ ITEMS = [
 ]
 
 MINERS = [
-    {"id": "hyper",    "name": "Hyper-Core Node",       "price": 100,    "daily": 100/180,    "duration": 180},
-    {"id": "nova",     "name": "Nova Reactor",           "price": 1000,   "daily": 1000/180,   "duration": 180},
-    {"id": "stellar",  "name": "Stellar Forge",          "price": 10000,  "daily": 10000/180,  "duration": 180},
-    {"id": "quantum",  "name": "Quantum Singularity",    "price": 100000, "daily": 100000/180, "duration": 180},
+    {"id": "hyper",   "name": "Hyper-Core Node",     "price": 100,    "daily": 100/180,    "duration": 180},
+    {"id": "nova",    "name": "Nova Reactor",         "price": 1000,   "daily": 1000/180,   "duration": 180},
+    {"id": "stellar", "name": "Stellar Forge",        "price": 10000,  "daily": 10000/180,  "duration": 180},
+    {"id": "quantum", "name": "Quantum Singularity",  "price": 100000, "daily": 100000/180, "duration": 180},
 ]
 
 def get_miner(miner_id):
@@ -90,9 +92,11 @@ def buy_miner(tg):
     col_active = f"miner_{miner_id}_active"
     col_expires = f"miner_{miner_id}_expires"
     col_start = f"miner_{miner_id}_start"
-    if user[col_active] and now < user[col_expires]:
-        conn.close()
-        return jsonify({"error": f"{miner['name']} already active"}), 400
+    try:
+        if user[col_active] and now < user[col_expires]:
+            conn.close()
+            return jsonify({"error": f"{miner['name']} already active"}), 400
+    except: pass
     if user["ton_balance"] < miner["price"]:
         conn.close()
         return jsonify({"error": f"Need {miner['price']} TON"}), 400
@@ -104,16 +108,14 @@ def buy_miner(tg):
     conn.commit()
     ref_id = user["referrer_id"]
     if ref_id:
-        ref = get_user(conn, ref_id)
-        if ref and ref[f"miner_{miner_id}_active"] and now < ref[col_expires]:
-            commission = miner["price"] * 0.10
-            conn.execute("UPDATE users SET ton_balance=ton_balance+? WHERE user_id=?", (commission, ref_id))
-            conn.commit()
-            try:
-                import requests as req, os
-                req.post(f"https://api.telegram.org/bot{os.environ.get('BOT_TOKEN','')}/sendMessage",
-                         json={"chat_id": ref_id, "text": f"💎 You earned {commission} TON commission!"})
-            except: pass
+        commission = miner["price"] * 0.10
+        conn.execute("UPDATE users SET ton_balance=ton_balance+? WHERE user_id=?", (commission, ref_id))
+        conn.commit()
+        try:
+            BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
+            req.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                     json={"chat_id": ref_id, "text": f"💎 You earned {commission} TON commission from your referral's miner purchase!\n\n+{commission} TON added to your balance."})
+        except: pass
     user = get_user(conn, tg["id"])
     conn.close()
     return jsonify({
