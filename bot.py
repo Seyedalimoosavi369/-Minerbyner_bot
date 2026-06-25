@@ -1,5 +1,5 @@
 import os
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo, Update, ChatMemberStatus
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import requests
 
