@@ -28,6 +28,19 @@ MINERS = [
     {"id": "quantum", "daily": 100000/180},
 ]
 
+REFERRAL_JOIN_REWARDS = [
+    10_000_000,
+    1_000_000,
+    100_000,
+    10_000,
+    1_000,
+    100,
+    10,
+    1,
+    1,
+    1,
+]
+
 COMMISSION_LEVELS = [0.10, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001, 0.000000001, 0.0000000001]
 
 MILESTONES = [
@@ -62,6 +75,31 @@ def apply_mine(conn, uid):
         )
     else:
         conn.execute("UPDATE users SET last_mine_time=? WHERE user_id=?", (now, uid))
+
+def pay_join_commission(conn, new_user_id):
+    user = get_user(conn, new_user_id)
+    ref_id = user["referrer_id"]
+    level = 0
+    while ref_id and level < len(REFERRAL_JOIN_REWARDS):
+        reward = REFERRAL_JOIN_REWARDS[level]
+        conn.execute("UPDATE users SET balance=balance+? WHERE user_id=?", (reward, ref_id))
+        ref = get_user(conn, ref_id)
+        if not ref:
+            break
+        ref_id = ref["referrer_id"]
+        level += 1
+
+def pay_commission(conn, buyer_id, amount):
+    user = get_user(conn, buyer_id)
+    ref_id = user["referrer_id"]
+    for rate in COMMISSION_LEVELS:
+        if not ref_id:
+            break
+        conn.execute("UPDATE users SET balance=balance+? WHERE user_id=?", (amount * rate, ref_id))
+        ref = get_user(conn, ref_id)
+        if not ref:
+            break
+        ref_id = ref["referrer_id"]
 
 def update_counts(conn, uid, side):
     conn.execute(f"UPDATE users SET {side}_count={side}_count+1 WHERE user_id=?", (uid,))
@@ -118,18 +156,6 @@ def place_in_binary(conn, new_uid, referrer_id):
     conn.execute(f"UPDATE users SET {side}_child=? WHERE user_id=?", (new_uid, referrer_id))
     update_counts(conn, referrer_id, side)
 
-def pay_commission(conn, buyer_id, amount):
-    user = get_user(conn, buyer_id)
-    ref_id = user["referrer_id"]
-    for rate in COMMISSION_LEVELS:
-        if not ref_id:
-            break
-        conn.execute("UPDATE users SET balance=balance+? WHERE user_id=?", (amount * rate, ref_id))
-        ref = get_user(conn, ref_id)
-        if not ref:
-            break
-        ref_id = ref["referrer_id"]
-
 @user_bp.route("/api/user", methods=["POST"])
 @auth_required
 def api_user(tg):
@@ -137,7 +163,9 @@ def api_user(tg):
     ref = data.get("ref")
     conn = get_db()
     user = get_user(conn, tg["id"])
+    is_new = False
     if not user:
+        is_new = True
         conn.execute(
             "INSERT INTO users (user_id, username, first_name, balance, ton_balance, last_mine_time, created_at) VALUES (?,?,?,?,?,?,?)",
             (tg["id"], tg.get("username",""), tg.get("first_name",""), 1000000, 0, time.time(), time.time())
@@ -148,8 +176,8 @@ def api_user(tg):
                 rid = int(ref)
                 if rid != tg["id"] and get_user(conn, rid):
                     conn.execute("UPDATE users SET referrer_id=? WHERE user_id=?", (rid, tg["id"]))
-                    conn.execute("UPDATE users SET balance=balance+1000000 WHERE user_id=?", (tg["id"],))
-                    pay_commission(conn, tg["id"], 1000000)
+                    conn.commit()
+                    pay_join_commission(conn, tg["id"])
                     place_in_binary(conn, tg["id"], rid)
                     conn.commit()
             except: pass
